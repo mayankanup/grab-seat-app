@@ -85,6 +85,8 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8080:8080"
+    volumes:
+      - C:/temp/grabseatlogs:/app/logs
 
   elasticsearch:
     image: elasticsearch:8.15.0
