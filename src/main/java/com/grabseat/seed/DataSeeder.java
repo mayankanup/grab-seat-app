@@ -68,6 +68,9 @@ public class DataSeeder implements CommandLineRunner {
     private void seedEvents() {
         Venue cinema = venues.save(new Venue("PVR Downtown Cinema", "Downtown Mall, Screen 4", 120));
         Venue comedyHall = venues.save(new Venue("Laugh Factory Hall", "MG Road, Auditorium B", 200));
+        Screen cinemaScreen = screens.save(new Screen(cinema, "Screen 1", cinema.getCapacity()));
+        Screen comedyScreen =
+            screens.save(new Screen(comedyHall, "Screen 1", comedyHall.getCapacity()));
 
         Performer duneCast = performers.save(new Performer("Dune: Part Two Cast", "MOVIE_CAST"));
         Performer interstellarCast = performers.save(new Performer("Interstellar Re-release Cast", "MOVIE_CAST"));
@@ -84,37 +87,37 @@ public class DataSeeder implements CommandLineRunner {
                 EventType.MOVIE, cinema, duneCast,
                 now.plusDays(1).withHour(18).withMinute(0),
                 now.plusDays(1).withHour(21).withMinute(0),
-                new BigDecimal("349.00")),
+                new BigDecimal("349.00"), cinemaScreen),
             new Event("Interstellar Re-release - Weekend Special",
                 "Christopher Nolan classic back on big screen.",
                 EventType.MOVIE, cinema, interstellarCast,
                 now.plusDays(2).withHour(15).withMinute(30),
                 now.plusDays(2).withHour(18).withMinute(30),
-                new BigDecimal("299.00")),
+                new BigDecimal("299.00"), cinemaScreen),
             new Event("Spider-Man: Across the Spider-Verse - Premiere",
                 "Animated premiere with live dubbing artists Q&A.",
                 EventType.MOVIE, cinema, spiderCast,
                 now.plusDays(3).withHour(19).withMinute(0),
                 now.plusDays(3).withHour(21).withMinute(30),
-                new BigDecimal("399.00")),
+                new BigDecimal("399.00"), cinemaScreen),
             new Event("Zakir Khan Live - Tathastu Tour",
                 "Stand-up special, 90 mins + 15 min opener.",
                 EventType.COMEDY, comedyHall, zakir,
                 now.plusDays(4).withHour(20).withMinute(0),
                 now.plusDays(4).withHour(22).withMinute(0),
-                new BigDecimal("999.00")),
+                new BigDecimal("999.00"), comedyScreen),
             new Event("Biswa Kalyan Rath - Mood Kharaab",
                 "Brand new hour + crowd work.",
                 EventType.COMEDY, comedyHall, biswa,
                 now.plusDays(5).withHour(19).withMinute(30),
                 now.plusDays(5).withHour(21).withMinute(0),
-                new BigDecimal("799.00")),
+                new BigDecimal("799.00"), comedyScreen),
             new Event("Anubhav Singh Bassi - Kisi Ko Batana Mat",
                 "Storytelling comedy, family friendly.",
                 EventType.COMEDY, comedyHall, anubhav,
                 now.plusDays(6).withHour(18).withMinute(0),
                 now.plusDays(6).withHour(20).withMinute(0),
-                new BigDecimal("899.00"))
+                new BigDecimal("899.00"), comedyScreen)
         );
 
         for (Event e : seedEvents) {
