@@ -1,5 +1,6 @@
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
+import AdminPage from "./pages/AdminPage";
 import BookingPage from "./pages/BookingPage";
 import EventDetailPage from "./pages/EventDetailPage";
 import EventListPage from "./pages/EventListPage";
@@ -17,8 +18,20 @@ function RequireAuth({ children }) {
   return children;
 }
 
+function RequireRole({ role, children }) {
+  const { authenticated, profile } = useAuth();
+  const location = useLocation();
+  if (!authenticated) {
+    return <Navigate to="/login" replace state={{ next: location.pathname }} />;
+  }
+  if (profile?.role !== role) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 function Header() {
-  const { displayName, authenticated, logout } = useAuth();
+  const { displayName, authenticated, profile, logout } = useAuth();
   return (
     <header className="bar">
       <Link to="/" className="brand">
@@ -27,6 +40,7 @@ function Header() {
       <span>
         {authenticated ? (
           <>
+            {profile?.role === "ADMIN" && <Link to="/admin">Admin</Link>}{" "}
             {displayName} <button onClick={logout}>Logout</button>
           </>
         ) : (
@@ -61,6 +75,14 @@ export default function App() {
               <RequireAuth>
                 <PaymentPage />
               </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <RequireRole role="ADMIN">
+                <AdminPage />
+              </RequireRole>
             }
           />
         </Routes>

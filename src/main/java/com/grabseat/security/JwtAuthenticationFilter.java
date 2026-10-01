@@ -32,8 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             try {
                 String subject = String.valueOf(jwtService.parseUserId(token));
+                String role = jwtService.parseRole(token);
                 var auth = new UsernamePasswordAuthenticationToken(
-                    subject, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                    subject, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (JwtException | IllegalArgumentException e) {
                 reject(response, "Invalid or expired token");

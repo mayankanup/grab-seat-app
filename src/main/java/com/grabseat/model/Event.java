@@ -37,12 +37,21 @@ public class Event {
     @Column(nullable = false)
     private BigDecimal basePrice;
 
+    @Column
+    private String seriesId;
+
     protected Event() {
     }
 
     public Event(String name, String description, EventType type, Venue venue,
                  Performer performer, LocalDateTime startTime, LocalDateTime endTime,
                  BigDecimal basePrice) {
+        this(name, description, type, venue, performer, startTime, endTime, basePrice, null);
+    }
+
+    public Event(String name, String description, EventType type, Venue venue,
+                 Performer performer, LocalDateTime startTime, LocalDateTime endTime,
+                 BigDecimal basePrice, String seriesId) {
         this.name = name;
         this.description = description;
         this.type = type;
@@ -51,6 +60,7 @@ public class Event {
         this.startTime = startTime;
         this.endTime = endTime;
         this.basePrice = basePrice;
+        this.seriesId = seriesId;
     }
 
     public Long getId() { return id; }
@@ -62,4 +72,5 @@ public class Event {
     public LocalDateTime getStartTime() { return startTime; }
     public LocalDateTime getEndTime() { return endTime; }
     public BigDecimal getBasePrice() { return basePrice; }
+    public String getSeriesId() { return seriesId; }
 }

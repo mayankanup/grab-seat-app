@@ -46,6 +46,14 @@ export const api = {
       body: { bookingId, ...card },
       auth: true,
     }),
+  createVenue: (venue) =>
+    request("/admin/venues", { method: "POST", body: venue, auth: true }),
+  createPerformer: (performer) =>
+    request("/admin/performers", { method: "POST", body: performer, auth: true }),
+  createEvent: (event) =>
+    request("/admin/events", { method: "POST", body: event, auth: true }),
+  createSchedule: (run) =>
+    request("/admin/events/schedule", { method: "POST", body: run, auth: true }),
 };
 
 export function tokenPayload() {

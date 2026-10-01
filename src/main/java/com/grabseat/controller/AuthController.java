@@ -37,6 +37,7 @@ public class AuthController {
 
     private TokenResponse tokenFor(UserAccount user) {
         return new TokenResponse(user.getId(), user.getLogin(), user.getFullName(),
-            user.getEmail(), jwtService.issue(user.getId(), user.getLogin()));
+            user.getEmail(), user.getRole().name(),
+            jwtService.issue(user.getId(), user.getLogin(), user.getRole().name()));
     }
 }

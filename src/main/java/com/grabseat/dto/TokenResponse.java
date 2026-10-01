@@ -5,6 +5,7 @@ public record TokenResponse(
     String login,
     String fullName,
     String email,
+    String role,
     String token
 ) {
 }
