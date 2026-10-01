@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +59,20 @@ public class EventService {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(pageSize, 1), 100);
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("startTime").ascending());
-        return events.search(keyword, start, end, pageable).map(e -> new EventSummaryResponse(
+        Specification<Event> spec = Specification.where(null);
+        if (keyword != null && !keyword.isBlank()) {
+            String kw = "%" + keyword.toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                cb.like(cb.lower(root.get("name")), kw),
+                cb.like(cb.lower(root.get("description")), kw)));
+        }
+        if (start != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("startTime"), start));
+        }
+        if (end != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("startTime"), end));
+        }
+        return events.findAll(spec, pageable).map(e -> new EventSummaryResponse(
             e.getId(), e.getName(), e.getDescription(), e.getType(),
             e.getStartTime(), e.getEndTime(), e.getBasePrice(),
             e.getVenue() != null ? e.getVenue().getName() : null,

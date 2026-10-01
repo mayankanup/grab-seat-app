@@ -59,7 +59,8 @@ class EventServiceTest {
             LocalDateTime.parse("2026-10-02T18:00:00"), LocalDateTime.parse("2026-10-02T21:00:00"),
             new BigDecimal("349.00"));
 
-        when(events.search(eq("dune"), any(), any(), any()))
+        when(events.findAll(any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Pageable.class)))
             .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(event)));
 
         var page = service.search("dune", null, null, 0, 20);
