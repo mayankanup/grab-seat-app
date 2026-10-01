@@ -19,7 +19,7 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | US3 | Reserve tickets: `POST /bookings/reserve {ticketIds[]}` | Core 3; API 3 | Done | Multi-ticket `Booking` + `ReserveTicketsRequest/Response` pairs; JWT principal; pessimistic lock + 201; 18/18 pass; live-verified in Docker; Redis lock + queue later |
 | US4 | Confirm booking: `POST /bookings/confirm {bookingId,cardNumber,expMonth,expYear,cvc}` | Core 3; API 4 | Done | `ConfirmBookingRequest/Response` pairs + `DummyStripeService` (4242 ok, 4000…0002 decline → 402); `paymentReference` in response; 22/22 pass; live-verified in Docker |
 | US5 | View my bookings: `GET /users/:userId/bookings` | Core 4 | Not Started | Needs `Booking(id,userId,tickets)` entity |
-| US6 | Admin add events: `POST /events`, `POST /venues`, `POST /performers` | Core 5 | Not Started | Role check (admin/coordinator) at Gateway |
+| US6 | Admin add events + scheduled runs (ADMIN) | Core 5 | Done | Roles in JWT + seeded admin; `POST /admin/venues|performers|events|events/schedule` (201); runs materialize dated shows (range, daily timings, duration, overlap check, seriesId); SPA Admin page; 49/49 pass; live-verified in Docker |
 | US7 | Dynamic pricing for popular events | Core 6 | Not Started | Rule TBD (e.g. sold% >80% → surge multiplier); apply on view/reserve |
 | INFRA-1 | Postgres + Redis + Elasticsearch + Kafka/Debezium in Docker Desktop | Tech 2,3; FinalArchitecture | In Progress | Docker: `Dockerfile` (multi-stage Maven+JRE21) + compose `app` + `postgres` healthy; verified `/api/health` UP + `/events/1` 40 tickets; pending: Redis, ES, Kafka |
 | TEST | Unit + integration (Testcontainers) + e2e per story | Tech 4 | In Progress | CI `.github/workflows/ci.yml` runs `mvn -B test` on push/PR with Postgres 16 service; verified locally 3/3 pass incl. `contextLoads`; pending: Testcontainers, e2e |
@@ -41,7 +41,8 @@ Status legend: `Done` | `In Progress` | `Not Started`
 - Dynamic pricing rule + `Booking` schema from diagram.
 - Git: `US0` merged into `feature/US1-view-event`; each story stays on its own `feature/*` branch.
 - Branches created: `S0, US0-US7, INFRA-1, TEST, UI` (all `feature/*`).
+- API namespace: all backend APIs under `/api` (SPA routes never collide; nginx proxies only `/api/`).
 
 ## Next action
 
-AUTH-1 registration in progress — verify live, then resume parked US5 my bookings.
+US6 done — next Elasticsearch-powered search.

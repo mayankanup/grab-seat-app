@@ -22,12 +22,13 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
-    public String issue(Long userId, String login) {
+    public String issue(Long userId, String login, String role) {
         Date now = new Date();
         return Jwts.builder()
             .subject(String.valueOf(userId))
             .claim("userId", userId)
             .claim("login", login)
+            .claim("role", role)
             .issuedAt(now)
             .expiration(new Date(now.getTime() + expirationMs))
             .signWith(key)
@@ -49,5 +50,15 @@ public class JwtService {
         } catch (NumberFormatException e) {
             throw new JwtException("Token has no numeric user id; please log in again");
         }
+    }
+
+    public String parseRole(String token) throws JwtException {
+        String role = Jwts.parser()
+            .verifyWith(key)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .get("role", String.class);
+        return role != null ? role : "USER";
     }
 }

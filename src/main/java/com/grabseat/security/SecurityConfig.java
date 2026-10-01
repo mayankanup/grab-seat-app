@@ -46,9 +46,10 @@ public class SecurityConfig {
             }))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/health", "/actuator/health", "/actuator/info",
-                    "/auth/**", "/error").permitAll()
-                .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
-                .requestMatchers("/bookings/**", "/users/**").authenticated()
+                    "/api/auth/**", "/error").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/bookings/**", "/api/users/**").authenticated()
                 .anyRequest().authenticated())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

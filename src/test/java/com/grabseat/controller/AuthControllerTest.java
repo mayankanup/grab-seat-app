@@ -44,15 +44,16 @@ class AuthControllerTest {
     void registerReturns201WithToken() throws Exception {
         when(userService.register(eq("anup"), eq("password123"), eq("Anup Kumar"),
             eq("anup@example.com"))).thenReturn(account());
-        when(jwtService.issue(any(), eq("anup"))).thenReturn("jwt-token");
+        when(jwtService.issue(any(), eq("anup"), eq("USER"))).thenReturn("jwt-token");
 
-        mvc.perform(post("/auth/register")
+        mvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(REGISTER_JSON))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.login").value("anup"))
             .andExpect(jsonPath("$.fullName").value("Anup Kumar"))
             .andExpect(jsonPath("$.email").value("anup@example.com"))
+            .andExpect(jsonPath("$.role").value("USER"))
             .andExpect(jsonPath("$.token").value("jwt-token"));
     }
 
@@ -62,7 +63,7 @@ class AuthControllerTest {
             eq("anup@example.com")))
             .thenThrow(new ConflictException("Login already taken: anup"));
 
-        mvc.perform(post("/auth/register")
+        mvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(REGISTER_JSON))
             .andExpect(status().isConflict())
@@ -72,9 +73,9 @@ class AuthControllerTest {
     @Test
     void loginReturns200WithToken() throws Exception {
         when(userService.authenticate(eq("anup"), eq("password123"))).thenReturn(account());
-        when(jwtService.issue(any(), eq("anup"))).thenReturn("jwt-token");
+        when(jwtService.issue(any(), eq("anup"), eq("USER"))).thenReturn("jwt-token");
 
-        mvc.perform(post("/auth/login")
+        mvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"login\":\"anup\",\"password\":\"password123\"}"))
             .andExpect(status().isOk())
@@ -88,10 +89,20 @@ class AuthControllerTest {
         when(userService.authenticate(eq("anup"), eq("wrongpass1")))
             .thenThrow(new UnauthorizedException("Invalid credentials"));
 
-        mvc.perform(post("/auth/login")
+        mvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"login\":\"anup\",\"password\":\"wrongpass1\"}"))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void loginShortPasswordReturns400WithErrorEnvelope() throws Exception {
+        mvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"login\":\"anup\",\"password\":\"anup\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                org.hamcrest.Matchers.containsString("password")));
     }
 }

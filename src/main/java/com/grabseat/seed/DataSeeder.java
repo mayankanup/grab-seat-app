@@ -2,7 +2,9 @@ package com.grabseat.seed;
 
 import com.grabseat.model.*;
 import com.grabseat.repository.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,18 +24,30 @@ public class DataSeeder implements CommandLineRunner {
     private final PerformerRepository performers;
     private final EventRepository events;
     private final TicketRepository tickets;
+    private final UserAccountRepository users;
+    private final PasswordEncoder passwordEncoder;
+    private final String adminLogin;
+    private final String adminPassword;
 
     public DataSeeder(VenueRepository venues, PerformerRepository performers,
-                      EventRepository events, TicketRepository tickets) {
+                      EventRepository events, TicketRepository tickets,
+                      UserAccountRepository users, PasswordEncoder passwordEncoder,
+                      @Value("${app.admin.login:admin}") String adminLogin,
+                      @Value("${app.admin.password:admin123}") String adminPassword) {
         this.venues = venues;
         this.performers = performers;
         this.events = events;
         this.tickets = tickets;
+        this.users = users;
+        this.passwordEncoder = passwordEncoder;
+        this.adminLogin = adminLogin;
+        this.adminPassword = adminPassword;
     }
 
     @Override
     @Transactional
     public void run(String... args) {
+        ensureAdmin();
         if (events.count() > 0) {
             return;
         }
@@ -92,6 +106,13 @@ public class DataSeeder implements CommandLineRunner {
         for (Event e : seedEvents) {
             Event saved = events.save(e);
             tickets.saveAll(buildTickets(saved, 40));
+        }
+    }
+
+    private void ensureAdmin() {
+        if (users.findByLogin(adminLogin).isEmpty()) {
+            users.save(new UserAccount(adminLogin, passwordEncoder.encode(adminPassword),
+                "Administrator", "admin@grabseat.local", Role.ADMIN));
         }
     }
 

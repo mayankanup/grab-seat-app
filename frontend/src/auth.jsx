@@ -28,7 +28,13 @@ export function AuthProvider({ children }) {
 
   const saveSession = useCallback((res) => {
     localStorage.setItem("grabseat_token", res.token);
-    const user = { userId: res.userId, login: res.login, fullName: res.fullName, email: res.email };
+    const user = {
+      userId: res.userId,
+      login: res.login,
+      fullName: res.fullName,
+      email: res.email,
+      role: res.role,
+    };
     localStorage.setItem("grabseat_user", JSON.stringify(user));
     setUserId(user.userId);
     setProfile(user);

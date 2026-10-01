@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserService userService;
@@ -37,6 +37,7 @@ public class AuthController {
 
     private TokenResponse tokenFor(UserAccount user) {
         return new TokenResponse(user.getId(), user.getLogin(), user.getFullName(),
-            user.getEmail(), jwtService.issue(user.getId(), user.getLogin()));
+            user.getEmail(), user.getRole().name(),
+            jwtService.issue(user.getId(), user.getLogin(), user.getRole().name()));
     }
 }

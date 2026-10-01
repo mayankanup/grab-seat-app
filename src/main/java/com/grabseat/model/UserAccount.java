@@ -22,6 +22,10 @@ public class UserAccount {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -29,10 +33,16 @@ public class UserAccount {
     }
 
     public UserAccount(String login, String passwordHash, String fullName, String email) {
+        this(login, passwordHash, fullName, email, Role.USER);
+    }
+
+    public UserAccount(String login, String passwordHash, String fullName, String email,
+                       Role role) {
         this.login = login;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
         this.email = email;
+        this.role = role;
     }
 
     public Long getId() { return id; }
@@ -40,5 +50,6 @@ public class UserAccount {
     public String getPasswordHash() { return passwordHash; }
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }
+    public Role getRole() { return role; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }
