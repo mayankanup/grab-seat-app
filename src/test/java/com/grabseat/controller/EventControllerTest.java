@@ -3,11 +3,14 @@ package com.grabseat.controller;
 import com.grabseat.dto.*;
 import com.grabseat.model.EventType;
 import com.grabseat.model.TicketStatus;
+import com.grabseat.security.JwtService;
+import com.grabseat.security.SecurityConfig;
 import com.grabseat.service.EventService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -21,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(EventController.class)
+@Import(SecurityConfig.class)
 class EventControllerTest {
 
     @Autowired
@@ -28,6 +32,9 @@ class EventControllerTest {
 
     @MockBean
     EventService eventService;
+
+    @MockBean
+    JwtService jwtService;
 
     @Test
     void getEventReturns200WithDetails() throws Exception {

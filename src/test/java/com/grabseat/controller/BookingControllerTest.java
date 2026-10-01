@@ -1,16 +1,21 @@
 package com.grabseat.controller;
 
-import com.grabseat.dto.BookingResponse;
+import com.grabseat.dto.ConfirmBookingResponse;
+import com.grabseat.dto.ReserveTicketsResponse;
 import com.grabseat.exception.TicketNotAvailableException;
+import com.grabseat.security.JwtService;
+import com.grabseat.security.SecurityConfig;
 import com.grabseat.service.BookingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -19,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BookingController.class)
+@Import(SecurityConfig.class)
 class BookingControllerTest {
 
     @Autowired
@@ -27,43 +33,70 @@ class BookingControllerTest {
     @MockBean
     BookingService bookingService;
 
+    @MockBean
+    JwtService jwtService;
+
+    private ReserveTicketsResponse reserveResponse() {
+        return new ReserveTicketsResponse(1L, "RESERVED", "user-1", List.of(
+            new ReserveTicketsResponse.BookedTicketDto(10L, 5L, "A-1",
+                new BigDecimal("349.00"), "RESERVED"),
+            new ReserveTicketsResponse.BookedTicketDto(11L, 5L, "A-2",
+                new BigDecimal("349.00"), "RESERVED")));
+    }
+
     @Test
-    void reserveReturns201() throws Exception {
-        when(bookingService.reserve(eq(10L), eq("user-1"))).thenReturn(
-            new BookingResponse(1L, 10L, 5L, "A-1", new BigDecimal("349.00"),
-                "RESERVED", "RESERVED", "user-1"));
+    void reserveReturns201WithTickets() throws Exception {
+        when(jwtService.parseUserId("test-token")).thenReturn("user-1");
+        when(bookingService.reserve(eq(List.of(10L, 11L)), eq("user-1")))
+            .thenReturn(reserveResponse());
 
         mvc.perform(post("/bookings/reserve")
+                .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"ticketId\":10,\"userId\":\"user-1\"}"))
+                .content("{\"ticketIds\":[10,11]}"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.ticketStatus").value("RESERVED"))
-            .andExpect(jsonPath("$.seatNumber").value("A-1"));
+            .andExpect(jsonPath("$.bookingStatus").value("RESERVED"))
+            .andExpect(jsonPath("$.tickets[0].seatNumber").value("A-1"))
+            .andExpect(jsonPath("$.tickets[1].seatNumber").value("A-2"));
     }
 
     @Test
     void reserveConflictReturns409() throws Exception {
-        when(bookingService.reserve(eq(10L), any()))
+        when(jwtService.parseUserId("test-token")).thenReturn("user-2");
+        when(bookingService.reserve(eq(List.of(10L)), any()))
             .thenThrow(new TicketNotAvailableException("Ticket 10 is not available"));
 
         mvc.perform(post("/bookings/reserve")
+                .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"ticketId\":10,\"userId\":\"user-2\"}"))
+                .content("{\"ticketIds\":[10]}"))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
+    void reserveWithoutTokenReturns401() throws Exception {
+        mvc.perform(post("/bookings/reserve")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"ticketIds\":[10]}"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
     void confirmReturns200() throws Exception {
-        when(bookingService.confirm(eq(10L), eq("user-1"), eq("tok_test"))).thenReturn(
-            new BookingResponse(1L, 10L, 5L, "A-1", new BigDecimal("349.00"),
-                "BOOKED", "CONFIRMED", "user-1"));
+        when(jwtService.parseUserId("test-token")).thenReturn("user-1");
+        when(bookingService.confirm(eq(1L), eq("user-1"), eq("tok_test"))).thenReturn(
+            new ConfirmBookingResponse(1L, "CONFIRMED", "user-1", List.of(
+                new ConfirmBookingResponse.BookedTicketDto(10L, 5L, "A-1",
+                    new BigDecimal("349.00"), "BOOKED"))));
 
         mvc.perform(post("/bookings/confirm")
+                .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"ticketId\":10,\"userId\":\"user-1\",\"paymentToken\":\"tok_test\"}"))
+                .content("{\"bookingId\":1,\"paymentToken\":\"tok_test\"}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.ticketStatus").value("BOOKED"))
-            .andExpect(jsonPath("$.bookingStatus").value("CONFIRMED"));
+            .andExpect(jsonPath("$.bookingStatus").value("CONFIRMED"))
+            .andExpect(jsonPath("$.tickets[0].ticketStatus").value("BOOKED"));
     }
 }

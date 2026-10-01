@@ -2,6 +2,8 @@ package com.grabseat.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings")
@@ -13,9 +15,8 @@ public class Booking {
     @Column(nullable = false)
     private String userId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ticket_id")
-    private Ticket ticket;
+    @OneToMany(mappedBy = "booking")
+    private List<Ticket> tickets = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -27,15 +28,18 @@ public class Booking {
     protected Booking() {
     }
 
-    public Booking(String userId, Ticket ticket, BookingStatus status) {
+    public Booking(String userId, List<Ticket> tickets) {
         this.userId = userId;
-        this.ticket = ticket;
-        this.status = status;
+        this.status = BookingStatus.RESERVED;
+        this.tickets = new ArrayList<>(tickets);
+        for (Ticket t : this.tickets) {
+            t.assignBooking(this);
+        }
     }
 
     public Long getId() { return id; }
     public String getUserId() { return userId; }
-    public Ticket getTicket() { return ticket; }
+    public List<Ticket> getTickets() { return tickets; }
     public BookingStatus getStatus() { return status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 

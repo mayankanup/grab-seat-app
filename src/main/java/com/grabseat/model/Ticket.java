@@ -26,6 +26,10 @@ public class Ticket {
 
     private String userId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id")
+    private Booking booking;
+
     @Version
     private Long version;
 
@@ -45,6 +49,11 @@ public class Ticket {
     public BigDecimal getPrice() { return price; }
     public TicketStatus getStatus() { return status; }
     public String getUserId() { return userId; }
+    public Booking getBooking() { return booking; }
+
+    void assignBooking(Booking booking) {
+        this.booking = booking;
+    }
 
     public void reserve(String userId) {
         if (status != TicketStatus.AVAILABLE) {

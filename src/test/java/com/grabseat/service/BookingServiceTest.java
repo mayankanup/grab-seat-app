@@ -1,7 +1,9 @@
 package com.grabseat.service;
 
-import com.grabseat.dto.BookingResponse;
+import com.grabseat.dto.ConfirmBookingResponse;
+import com.grabseat.dto.ReserveTicketsResponse;
 import com.grabseat.exception.PaymentFailedException;
+import com.grabseat.exception.ResourceNotFoundException;
 import com.grabseat.exception.TicketNotAvailableException;
 import com.grabseat.model.*;
 import com.grabseat.repository.BookingRepository;
@@ -14,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,70 +36,88 @@ class BookingServiceTest {
     @InjectMocks
     BookingService service;
 
-    private Ticket availableTicket() {
+    private Event event() {
         Venue venue = new Venue("PVR Downtown Cinema", "Downtown Mall", 120);
         Performer performer = new Performer("Dune Cast", "MOVIE_CAST");
-        Event event = new Event("Dune Evening Show", "IMAX", EventType.MOVIE, venue, performer,
+        return new Event("Dune Evening Show", "IMAX", EventType.MOVIE, venue, performer,
             LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(1).plusHours(3),
             new BigDecimal("349.00"));
-        return new Ticket(event, "A-1", new BigDecimal("349.00"), TicketStatus.AVAILABLE);
+    }
+
+    private List<Ticket> availableTickets(String... seats) {
+        Event e = event();
+        List<Ticket> list = new ArrayList<>();
+        for (String s : seats) {
+            list.add(new Ticket(e, s, new BigDecimal("349.00"), TicketStatus.AVAILABLE));
+        }
+        return list;
     }
 
     @Test
-    void reserveMarksTicketReservedAndCreatesBooking() {
-        Ticket ticket = availableTicket();
-        when(tickets.findByIdForUpdate(10L)).thenReturn(Optional.of(ticket));
+    void reserveMultipleTicketsCreatesOneBooking() {
+        List<Ticket> locked = availableTickets("A-1", "A-2");
+        when(tickets.findAllByIdInForUpdate(List.of(10L, 11L))).thenReturn(locked);
         when(bookings.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
 
-        BookingResponse res = service.reserve(10L, "user-1");
+        ReserveTicketsResponse res = service.reserve(List.of(11L, 10L), "user-1");
 
-        assertThat(res.ticketStatus()).isEqualTo("RESERVED");
+        assertThat(res.tickets()).hasSize(2);
+        assertThat(res.tickets()).allMatch(t -> t.ticketStatus().equals("RESERVED"));
         assertThat(res.bookingStatus()).isEqualTo("RESERVED");
         assertThat(res.userId()).isEqualTo("user-1");
     }
 
     @Test
-    void reserveConflictWhenAlreadyReserved() {
-        Ticket ticket = availableTicket();
-        ticket.reserve("user-1");
-        when(tickets.findByIdForUpdate(10L)).thenReturn(Optional.of(ticket));
+    void reserveConflictWhenAnyTicketTaken() {
+        List<Ticket> locked = availableTickets("A-1", "A-2");
+        locked.get(0).reserve("user-1");
+        when(tickets.findAllByIdInForUpdate(List.of(10L, 11L))).thenReturn(locked);
 
-        assertThatThrownBy(() -> service.reserve(10L, "user-2"))
+        assertThatThrownBy(() -> service.reserve(List.of(10L, 11L), "user-2"))
             .isInstanceOf(TicketNotAvailableException.class);
     }
 
     @Test
-    void confirmMarksTicketBooked() {
-        Ticket ticket = availableTicket();
-        ticket.reserve("user-1");
-        Booking booking = new Booking("user-1", ticket, BookingStatus.RESERVED);
-        when(bookings.findByTicketId(10L)).thenReturn(Optional.of(booking));
+    void reserveFailsWhenTicketMissing() {
+        when(tickets.findAllByIdInForUpdate(List.of(10L, 99L)))
+            .thenReturn(availableTickets("A-1"));
 
-        BookingResponse res = service.confirm(10L, "user-1", "tok_test_visa");
+        assertThatThrownBy(() -> service.reserve(List.of(10L, 99L), "user-1"))
+            .isInstanceOf(ResourceNotFoundException.class);
+    }
 
-        assertThat(res.ticketStatus()).isEqualTo("BOOKED");
+    @Test
+    void confirmMarksAllTicketsBooked() {
+        List<Ticket> locked = availableTickets("A-1", "A-2");
+        locked.forEach(t -> t.reserve("user-1"));
+        Booking booking = new Booking("user-1", locked);
+        when(bookings.findById(1L)).thenReturn(Optional.of(booking));
+
+        ConfirmBookingResponse res = service.confirm(1L, "user-1", "tok_test_visa");
+
+        assertThat(res.tickets()).allMatch(t -> t.ticketStatus().equals("BOOKED"));
         assertThat(res.bookingStatus()).isEqualTo("CONFIRMED");
     }
 
     @Test
     void confirmFailsForOtherUser() {
-        Ticket ticket = availableTicket();
-        ticket.reserve("user-1");
-        Booking booking = new Booking("user-1", ticket, BookingStatus.RESERVED);
-        when(bookings.findByTicketId(10L)).thenReturn(Optional.of(booking));
+        List<Ticket> locked = availableTickets("A-1");
+        locked.forEach(t -> t.reserve("user-1"));
+        when(bookings.findById(1L))
+            .thenReturn(Optional.of(new Booking("user-1", locked)));
 
-        assertThatThrownBy(() -> service.confirm(10L, "user-2", "tok_test"))
+        assertThatThrownBy(() -> service.confirm(1L, "user-2", "tok_test"))
             .isInstanceOf(TicketNotAvailableException.class);
     }
 
     @Test
     void confirmFailsWhenCardDeclined() {
-        Ticket ticket = availableTicket();
-        ticket.reserve("user-1");
-        Booking booking = new Booking("user-1", ticket, BookingStatus.RESERVED);
-        when(bookings.findByTicketId(10L)).thenReturn(Optional.of(booking));
+        List<Ticket> locked = availableTickets("A-1");
+        locked.forEach(t -> t.reserve("user-1"));
+        when(bookings.findById(1L))
+            .thenReturn(Optional.of(new Booking("user-1", locked)));
 
-        assertThatThrownBy(() -> service.confirm(10L, "user-1", "fail_card"))
+        assertThatThrownBy(() -> service.confirm(1L, "user-1", "fail_card"))
             .isInstanceOf(PaymentFailedException.class);
     }
 }
