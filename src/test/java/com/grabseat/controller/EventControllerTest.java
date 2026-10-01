@@ -3,6 +3,7 @@ package com.grabseat.controller;
 import com.grabseat.dto.*;
 import com.grabseat.model.EventType;
 import com.grabseat.model.TicketStatus;
+import com.grabseat.search.SearchService;
 import com.grabseat.security.JwtService;
 import com.grabseat.security.SecurityConfig;
 import com.grabseat.service.EventService;
@@ -34,6 +35,9 @@ class EventControllerTest {
     EventService eventService;
 
     @MockBean
+    SearchService searchService;
+
+    @MockBean
     JwtService jwtService;
 
     @Test
@@ -60,7 +64,7 @@ class EventControllerTest {
         var summary = new EventSummaryResponse(1L, "Dune Evening Show", "IMAX", EventType.MOVIE,
             LocalDateTime.parse("2026-10-02T18:00:00"), LocalDateTime.parse("2026-10-02T21:00:00"),
             new BigDecimal("349.00"), "PVR Downtown Cinema", "Dune Cast", "IMAX");
-        when(eventService.search(any(), any(), any(), anyInt(), anyInt()))
+        when(searchService.search(any(), any(), any(), anyInt(), anyInt()))
             .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(summary)));
 
         mvc.perform(get("/api/events/search").param("keyword", "dune"))
