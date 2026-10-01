@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -42,5 +44,19 @@ class EventControllerTest {
             .andExpect(jsonPath("$.name").value("Dune Evening Show"))
             .andExpect(jsonPath("$.venue.name").value("PVR Downtown Cinema"))
             .andExpect(jsonPath("$.tickets[0].seatNumber").value("A-1"));
+    }
+
+    @Test
+    void searchReturns200WithPage() throws Exception {
+        var summary = new EventSummaryResponse(1L, "Dune Evening Show", "IMAX", EventType.MOVIE,
+            LocalDateTime.parse("2026-10-02T18:00:00"), LocalDateTime.parse("2026-10-02T21:00:00"),
+            new BigDecimal("349.00"), "PVR Downtown Cinema", "Dune Cast");
+        when(eventService.search(any(), any(), any(), anyInt(), anyInt()))
+            .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(summary)));
+
+        mvc.perform(get("/events/search").param("keyword", "dune"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].name").value("Dune Evening Show"))
+            .andExpect(jsonPath("$.totalElements").value(1));
     }
 }

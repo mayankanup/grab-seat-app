@@ -15,7 +15,7 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | S0 | Project scaffold: Spring Boot, JPA, Postgres, `docker-compose.yml`, `GET /api/health` | Tech guidelines 2,3 | Done | `pom.xml`, `docker-compose.yml`, `HealthController.java`; verified `mvn -q compile -DskipTests` OK |
 | US0 | Seed DB with movies + comedy shows | New request (demo data for 1-4) | Done | Merged PR #1; live-verified in Docker: `GET /events/1` = Dune show, 40 tickets |
 | US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | Done | Merged PR #2; `EventServiceTest` + `EventControllerTest` 2/2 pass; live-verified in Docker |
-| US2 | Search events: `GET /events/search?keyword,start,end,pageSize,page` | Core 2; API 2 | Not Started | Start DB-only; ES + CDC/Kafka later. Note spec mismatch: diagram uses `term,location,type,date` — to confirm |
+| US2 | Search events: `GET /events/search?keyword,start,end,pageSize,page` | Core 2; API 2 | Done | DB-only `EventRepository.search` + `EventService.search` + `GET /events/search`; `EventServiceTest` + `EventControllerTest` 4/4 pass; ES + CDC/Kafka later |
 | US3 | Reserve ticket: `reserve(ticketId,userId)` → `POST /bookings/reserve` | Core 3; API 3 | Not Started | Needs Redis ticket-lock `{ticketId:userId} TTL 10min` + virtual waiting queue |
 | US4 | Confirm payment: `confirm(ticketId,userId,paymentDetails)` → `POST /bookings/confirm` | Core 3; API 4 | Not Started | Stripe mock; mark `BOOKED`, create `Booking` |
 | US5 | View my bookings: `GET /users/:userId/bookings` | Core 4 | Not Started | Needs `Booking(id,userId,tickets)` entity |
@@ -43,4 +43,4 @@ Status legend: `Done` | `In Progress` | `Not Started`
 
 ## Next action
 
-Docker deploy done — start US2 DB-backed search (`GET /events/search`), then US3/US4 reserve+confirm.
+US2 done — start US3/US4 reserve+confirm (`POST /bookings/reserve`, `POST /bookings/confirm` with Redis lock).
