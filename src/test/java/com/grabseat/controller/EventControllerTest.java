@@ -43,6 +43,7 @@ class EventControllerTest {
             new BigDecimal("349.00"),
             new VenueDto(1L, "PVR Downtown Cinema", "Downtown Mall", 120),
             new PerformerDto(1L, "Dune Cast", "MOVIE_CAST"),
+            new ScreenDto(2L, 1L, "PVR Downtown Cinema", "IMAX", 80),
             List.of(new TicketDto(1L, "A-1", new BigDecimal("349.00"), TicketStatus.AVAILABLE)));
         when(eventService.getEventDetails(1L)).thenReturn(res);
 
@@ -50,6 +51,7 @@ class EventControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("Dune Evening Show"))
             .andExpect(jsonPath("$.venue.name").value("PVR Downtown Cinema"))
+            .andExpect(jsonPath("$.screen.name").value("IMAX"))
             .andExpect(jsonPath("$.tickets[0].seatNumber").value("A-1"));
     }
 
@@ -57,7 +59,7 @@ class EventControllerTest {
     void searchReturns200WithPage() throws Exception {
         var summary = new EventSummaryResponse(1L, "Dune Evening Show", "IMAX", EventType.MOVIE,
             LocalDateTime.parse("2026-10-02T18:00:00"), LocalDateTime.parse("2026-10-02T21:00:00"),
-            new BigDecimal("349.00"), "PVR Downtown Cinema", "Dune Cast");
+            new BigDecimal("349.00"), "PVR Downtown Cinema", "Dune Cast", "IMAX");
         when(eventService.search(any(), any(), any(), anyInt(), anyInt()))
             .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(summary)));
 

@@ -2,8 +2,6 @@ package com.grabseat.dto;
 
 import com.grabseat.model.EventType;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -11,7 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record CreateEventRequest(
+public record UpdateEventRequest(
     @NotBlank String name,
     String description,
     @NotNull EventType type,
@@ -20,7 +18,6 @@ public record CreateEventRequest(
     Long screenId,
     @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
-    @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal basePrice,
-    @Min(1) @Max(1000) Integer ticketCount
+    @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal basePrice
 ) {
 }

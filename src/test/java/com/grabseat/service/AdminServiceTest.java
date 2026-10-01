@@ -34,6 +34,8 @@ class AdminServiceTest {
     @Mock
     TicketRepository tickets;
     @Mock
+    ScreenRepository screens;
+    @Mock
     EventService eventService;
 
     @InjectMocks
@@ -41,7 +43,7 @@ class AdminServiceTest {
 
     private CreateEventRequest request() {
         return new CreateEventRequest("New Night Show", "Late comedy", EventType.COMEDY,
-            3L, 4L, LocalDateTime.now().plusDays(9).withNano(0),
+            3L, 4L, null, LocalDateTime.now().plusDays(9).withNano(0),
             LocalDateTime.now().plusDays(9).plusHours(2).withNano(0),
             new BigDecimal("499.00"), 5);
     }
@@ -85,7 +87,7 @@ class AdminServiceTest {
     @Test
     void createEventFailsWhenEndBeforeStart() {
         CreateEventRequest bad = new CreateEventRequest("X", null, EventType.MOVIE, 3L, null,
-            LocalDateTime.now().plusDays(1), LocalDateTime.now().minusDays(1),
+            null, LocalDateTime.now().plusDays(1), LocalDateTime.now().minusDays(1),
             new BigDecimal("100.00"), 10);
 
         assertThatThrownBy(() -> service.createEvent(bad))
@@ -103,7 +105,7 @@ class AdminServiceTest {
 
     private CreateScheduledEventsRequest scheduleRequest() {
         return new CreateScheduledEventsRequest("Morning Laughs", "Daily comedy",
-            EventType.COMEDY, 3L, 4L, new BigDecimal("299.00"), 2,
+            EventType.COMEDY, 3L, 4L, null, new BigDecimal("299.00"), 2,
             new CreateScheduledEventsRequest.Schedule(
                 java.time.LocalDate.now().plusDays(10),
                 java.time.LocalDate.now().plusDays(11),
@@ -129,7 +131,7 @@ class AdminServiceTest {
 
     @Test
     void createScheduledEventsRejectsOverlaps() {
-        var bad = new CreateScheduledEventsRequest("X", null, EventType.MOVIE, 3L, null,
+        var bad = new CreateScheduledEventsRequest("X", null, EventType.MOVIE, 3L, null, null,
             new BigDecimal("100.00"), 2,
             new CreateScheduledEventsRequest.Schedule(
                 java.time.LocalDate.now().plusDays(10),
@@ -143,7 +145,7 @@ class AdminServiceTest {
 
     @Test
     void createScheduledEventsRejectsBackwardRange() {
-        var bad = new CreateScheduledEventsRequest("X", null, EventType.MOVIE, 3L, null,
+        var bad = new CreateScheduledEventsRequest("X", null, EventType.MOVIE, 3L, null, null,
             new BigDecimal("100.00"), 2,
             new CreateScheduledEventsRequest.Schedule(
                 java.time.LocalDate.now().plusDays(11),
@@ -152,6 +154,78 @@ class AdminServiceTest {
                 60));
 
         assertThatThrownBy(() -> service.createScheduledEvents(bad))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void updateVenueSavesChanges() {
+        Venue venue = new Venue("Old", "Town", 100);
+        when(venues.findById(3L)).thenReturn(Optional.of(venue));
+
+        var dto = service.updateVenue(3L, "New Hall", "City", 200);
+
+        assertThat(dto.name()).isEqualTo("New Hall");
+        assertThat(dto.capacity()).isEqualTo(200);
+    }
+
+    @Test
+    void updateVenueMissingThrows404() {
+        when(venues.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateVenue(99L, "X", "Y", 10))
+            .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void listVenuesReturnsAll() {
+        when(venues.findAll(org.springframework.data.domain.Sort.by("id"))).thenReturn(
+            List.of(new Venue("A", "X", 10), new Venue("B", "Y", 20)));
+
+        assertThat(service.listVenues()).hasSize(2);
+    }
+
+    @Test
+    void createScreenSavesUnderVenue() {
+        Venue venue = new Venue("Hall", "Town", 100);
+        when(venues.findById(3L)).thenReturn(Optional.of(venue));
+        when(screens.save(any(Screen.class))).thenAnswer(i -> i.getArgument(0));
+
+        var dto = service.createScreen(3L, "IMAX", 80);
+
+        assertThat(dto.name()).isEqualTo("IMAX");
+        assertThat(dto.capacity()).isEqualTo(80);
+    }
+
+    @Test
+    void createEventRejectsForeignScreen() {
+        Venue venue = new Venue("Hall", "Town", 100);
+        Venue other = new Venue("Other", "Elsewhere", 50);
+        when(venues.findById(3L)).thenReturn(Optional.of(venue));
+        when(performers.findById(4L)).thenReturn(Optional.of(new Performer("C", "X")));
+        when(screens.findById(9L)).thenReturn(Optional.of(new Screen(other, "S1", 50)));
+
+        var req = new CreateEventRequest("N", null, EventType.MOVIE, 3L, 4L, 9L,
+            LocalDateTime.now().plusDays(1), null, new BigDecimal("100.00"), 5);
+
+        assertThatThrownBy(() -> service.createEvent(req))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void createEventRejectsScreenClash() {
+        Venue venue = new Venue("Hall", "Town", 100);
+        Screen screen = new Screen(venue, "S1", 50);
+        when(venues.findById(3L)).thenReturn(Optional.of(venue));
+        when(performers.findById(4L)).thenReturn(Optional.of(new Performer("C", "X")));
+        when(screens.findById(9L)).thenReturn(Optional.of(screen));
+        when(events.count(any(org.springframework.data.jpa.domain.Specification.class)))
+            .thenReturn(1L);
+
+        var req = new CreateEventRequest("N", null, EventType.MOVIE, 3L, 4L, 9L,
+            LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(1).plusHours(2),
+            new BigDecimal("100.00"), 5);
+
+        assertThatThrownBy(() -> service.createEvent(req))
             .isInstanceOf(IllegalArgumentException.class);
     }
 }

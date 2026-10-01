@@ -16,7 +16,9 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AdminController.class)
@@ -77,6 +79,24 @@ class AdminControllerTest {
 
     @Test
     @WithMockUser(username = "1", roles = "ADMIN")
+    void adminCanCreateScreen() throws Exception {
+        mvc.perform(post("/api/admin/screens")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"venueId\":3,\"name\":\"IMAX\",\"capacity\":80}"))
+            .andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = "7", roles = "USER")
+    void userCannotCreateScreen() throws Exception {
+        mvc.perform(post("/api/admin/screens")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"venueId\":3,\"name\":\"IMAX\",\"capacity\":80}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
     void adminCanCreateSchedule() throws Exception {
         when(adminService.createScheduledEvents(any())).thenReturn(List.of());
 
@@ -96,5 +116,30 @@ class AdminControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void adminCanListVenues() throws Exception {
+        when(adminService.listVenues()).thenReturn(List.of());
+
+        mvc.perform(get("/api/admin/venues"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void adminCanUpdateEvent() throws Exception {
+        mvc.perform(put("/api/admin/events/5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Renamed\",\"type\":\"COMEDY\",\"venueId\":3,"
+                    + "\"startTime\":\"2026-11-01T20:00:00\",\"basePrice\":499.00}"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void anonymousCannotListVenues() throws Exception {
+        mvc.perform(get("/api/admin/venues"))
+            .andExpect(status().isUnauthorized());
     }
 }

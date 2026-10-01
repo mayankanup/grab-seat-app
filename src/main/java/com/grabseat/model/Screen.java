@@ -3,38 +3,38 @@ package com.grabseat.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "venues")
-public class Venue {
+@Table(name = "screens")
+public class Screen {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "venue_id")
+    private Venue venue;
 
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
-    private String location;
-
-    @Column(nullable = false)
     private Integer capacity;
 
-    protected Venue() {
+    protected Screen() {
     }
 
-    public Venue(String name, String location, Integer capacity) {
+    public Screen(Venue venue, String name, Integer capacity) {
+        this.venue = venue;
         this.name = name;
-        this.location = location;
         this.capacity = capacity;
     }
 
     public Long getId() { return id; }
+    public Venue getVenue() { return venue; }
     public String getName() { return name; }
-    public String getLocation() { return location; }
     public Integer getCapacity() { return capacity; }
 
-    public void update(String name, String location, Integer capacity) {
+    public void update(String name, Integer capacity) {
         this.name = name;
-        this.location = location;
         this.capacity = capacity;
     }
 }
