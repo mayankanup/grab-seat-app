@@ -44,6 +44,7 @@ Status legend: `Done` | `In Progress` | `Not Started`
 - Git: `US0` merged into `feature/US1-view-event`; each story stays on its own `feature/*` branch.
 - Branches created: `S0, US0-US7, INFRA-1, TEST, UI` (all `feature/*`).
 - API namespace: all backend APIs under `/api` (SPA routes never collide; nginx proxies only `/api/`).
+- Logs: app writes `C:\temp\grabseatlogs\app.log`; `logcollector` sidecar tails all services there (`grabseat-*.log`).
 
 ## Next action
 

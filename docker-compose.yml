@@ -113,6 +113,26 @@ services:
     ports:
       - "3000:80"
 
+  # Tails every service's stdout/stderr into C:\temp\grabseatlogs (dev
+  # debugging). Re-attaches on restart; files append, may duplicate lines.
+  logcollector:
+    image: docker:cli
+    container_name: grabseat-logcollector
+    depends_on:
+      - postgres
+      - kafka
+      - debezium
+      - elasticsearch
+      - app
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - C:/temp/grabseatlogs:/logs
+    entrypoint: >
+      sh -c "for c in postgres kafka debezium elasticsearch app web;
+      do (while true; do docker logs -f --tail 200 grabseat-$$c >> /logs/grabseat-$$c.log 2>&1; sleep 5; done &);
+      done; tail -f /dev/null"
+
 volumes:
   grabseat-pgdata:
   grabseat-esdata:
