@@ -22,7 +22,7 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | US6 | Admin add events: `POST /events`, `POST /venues`, `POST /performers` | Core 5 | Not Started | Role check (admin/coordinator) at Gateway |
 | US7 | Dynamic pricing for popular events | Core 6 | Not Started | Rule TBD (e.g. sold% >80% → surge multiplier); apply on view/reserve |
 | INFRA-1 | Postgres + Redis + Elasticsearch + Kafka/Debezium in Docker Desktop | Tech 2,3; FinalArchitecture | In Progress | Docker: `Dockerfile` (multi-stage Maven+JRE21) + compose `app` + `postgres` healthy; verified `/api/health` UP + `/events/1` 40 tickets; pending: Redis, ES, Kafka |
-| TEST | Unit + integration (Testcontainers) + e2e per story | Tech 4 | Not Started | `GrabSeatApplicationTests.contextLoads` only; fails without DB |
+| TEST | Unit + integration (Testcontainers) + e2e per story | Tech 4 | In Progress | CI `.github/workflows/ci.yml` runs `mvn -B test` on push/PR with Postgres 16 service; verified locally 3/3 pass incl. `contextLoads`; pending: Testcontainers, e2e |
 | UI | Web UI for user (view/search/book/my) + admin (add) | Tech 5 | Not Started | Propose Thymeleaf first |
 
 ## Plan of action (in order)
