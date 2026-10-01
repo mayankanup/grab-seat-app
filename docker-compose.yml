@@ -29,5 +29,13 @@ services:
     ports:
       - "8080:8080"
 
+  web:
+    build: ./frontend
+    container_name: grabseat-web
+    depends_on:
+      - app
+    ports:
+      - "3000:80"
+
 volumes:
   grabseat-pgdata:

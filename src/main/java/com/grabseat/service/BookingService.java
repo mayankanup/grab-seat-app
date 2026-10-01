@@ -1,18 +1,20 @@
 package com.grabseat.service;
 
+import com.grabseat.dto.ConfirmBookingRequest;
 import com.grabseat.dto.ConfirmBookingResponse;
 import com.grabseat.dto.ReserveTicketsResponse;
-import com.grabseat.exception.PaymentFailedException;
 import com.grabseat.exception.ResourceNotFoundException;
 import com.grabseat.exception.TicketNotAvailableException;
 import com.grabseat.model.Booking;
 import com.grabseat.model.BookingStatus;
 import com.grabseat.model.Ticket;
+import com.grabseat.payment.DummyStripeService;
 import com.grabseat.repository.BookingRepository;
 import com.grabseat.repository.TicketRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -22,10 +24,13 @@ public class BookingService {
 
     private final TicketRepository tickets;
     private final BookingRepository bookings;
+    private final DummyStripeService payments;
 
-    public BookingService(TicketRepository tickets, BookingRepository bookings) {
+    public BookingService(TicketRepository tickets, BookingRepository bookings,
+                          DummyStripeService payments) {
         this.tickets = tickets;
         this.bookings = bookings;
+        this.payments = payments;
     }
 
     @Transactional
@@ -45,9 +50,8 @@ public class BookingService {
     }
 
     @Transactional
-    public ConfirmBookingResponse confirm(Long bookingId, String userId, String paymentToken) {
+    public ConfirmBookingResponse confirm(Long bookingId, String userId, ConfirmBookingRequest payment) {
         requireText(userId, "userId is required");
-        requireText(paymentToken, "paymentToken is required (Stripe mock)");
         Booking booking = bookings.findById(bookingId)
             .orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + bookingId));
         if (!booking.getUserId().equals(userId)) {
@@ -58,19 +62,17 @@ public class BookingService {
             throw new TicketNotAvailableException(
                 "Booking " + bookingId + " is already " + booking.getStatus());
         }
-        chargeMock(paymentToken, booking);
+        BigDecimal total = booking.getTickets().stream()
+            .map(Ticket::getPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        DummyStripeService.ChargeResult charge =
+            payments.charge(payment.cardNumber(), total);
         for (Ticket t : booking.getTickets()) {
             t.confirm(userId);
         }
         booking.confirm();
         return new ConfirmBookingResponse(booking.getId(), booking.getStatus().name(),
-            booking.getUserId(), confirmLinesOf(booking));
-    }
-
-    private void chargeMock(String paymentToken, Booking booking) {
-        if (paymentToken.startsWith("fail")) {
-            throw new PaymentFailedException("Card declined for booking " + booking.getId());
-        }
+            booking.getUserId(), charge.transactionId(), confirmLinesOf(booking));
     }
 
     private List<Long> requireIds(List<Long> ticketIds) {

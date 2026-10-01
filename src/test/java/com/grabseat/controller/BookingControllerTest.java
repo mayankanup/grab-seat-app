@@ -86,17 +86,19 @@ class BookingControllerTest {
     @Test
     void confirmReturns200() throws Exception {
         when(jwtService.parseUserId("test-token")).thenReturn("user-1");
-        when(bookingService.confirm(eq(1L), eq("user-1"), eq("tok_test"))).thenReturn(
-            new ConfirmBookingResponse(1L, "CONFIRMED", "user-1", List.of(
+        when(bookingService.confirm(eq(1L), eq("user-1"), any())).thenReturn(
+            new ConfirmBookingResponse(1L, "CONFIRMED", "user-1", "ch_test", List.of(
                 new ConfirmBookingResponse.BookedTicketDto(10L, 5L, "A-1",
                     new BigDecimal("349.00"), "BOOKED"))));
 
         mvc.perform(post("/bookings/confirm")
                 .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"bookingId\":1,\"paymentToken\":\"tok_test\"}"))
+                .content("{\"bookingId\":1,\"cardNumber\":\"4242424242424242\","
+                    + "\"expMonth\":12,\"expYear\":2030,\"cvc\":\"123\"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.bookingStatus").value("CONFIRMED"))
+            .andExpect(jsonPath("$.paymentReference").value("ch_test"))
             .andExpect(jsonPath("$.tickets[0].ticketStatus").value("BOOKED"));
     }
 }

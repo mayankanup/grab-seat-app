@@ -17,13 +17,13 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | Done | Merged PR #2; `EventServiceTest` + `EventControllerTest` 2/2 pass; live-verified in Docker |
 | US2 | Search events: `GET /events/search?keyword,start,end,pageSize,page` | Core 2; API 2 | Done | Merged PR #4; Specifications-based `EventService.search` + `GET /events/search`; 4/4 pass; live-verified in Docker; ES + CDC/Kafka later |
 | US3 | Reserve tickets: `POST /bookings/reserve {ticketIds[]}` | Core 3; API 3 | Done | Multi-ticket `Booking` + `ReserveTicketsRequest/Response` pairs; JWT principal; pessimistic lock + 201; 18/18 pass; live-verified in Docker; Redis lock + queue later |
-| US4 | Confirm booking: `POST /bookings/confirm {bookingId,paymentToken}` | Core 3; API 4 | Done | `ConfirmBookingRequest/Response` pairs; Stripe mock (`tok_*`, `fail*` → 402); 409 wrong-user/reuse, 404 unknown booking; live-verified in Docker |
+| US4 | Confirm booking: `POST /bookings/confirm {bookingId,cardNumber,expMonth,expYear,cvc}` | Core 3; API 4 | Done | `ConfirmBookingRequest/Response` pairs + `DummyStripeService` (4242 ok, 4000…0002 decline → 402); `paymentReference` in response; 22/22 pass; live-verified in Docker |
 | US5 | View my bookings: `GET /users/:userId/bookings` | Core 4 | Not Started | Needs `Booking(id,userId,tickets)` entity |
 | US6 | Admin add events: `POST /events`, `POST /venues`, `POST /performers` | Core 5 | Not Started | Role check (admin/coordinator) at Gateway |
 | US7 | Dynamic pricing for popular events | Core 6 | Not Started | Rule TBD (e.g. sold% >80% → surge multiplier); apply on view/reserve |
 | INFRA-1 | Postgres + Redis + Elasticsearch + Kafka/Debezium in Docker Desktop | Tech 2,3; FinalArchitecture | In Progress | Docker: `Dockerfile` (multi-stage Maven+JRE21) + compose `app` + `postgres` healthy; verified `/api/health` UP + `/events/1` 40 tickets; pending: Redis, ES, Kafka |
 | TEST | Unit + integration (Testcontainers) + e2e per story | Tech 4 | In Progress | CI `.github/workflows/ci.yml` runs `mvn -B test` on push/PR with Postgres 16 service; verified locally 3/3 pass incl. `contextLoads`; pending: Testcontainers, e2e |
-| UI | Web UI for user (view/search/book/my) + admin (add) | Tech 5 | Not Started | Propose Thymeleaf first |
+| UI | React SPA: login, event list, event detail, booking, payment | Tech 5 | In Progress | `frontend/` (Vite + Router); public browse, JWT login-gated reserve→pay→confirm with token reuse; `web` compose service + nginx proxy; CORS for Vite dev |
 
 ## Plan of action (in order)
 
@@ -43,4 +43,4 @@ Status legend: `Done` | `In Progress` | `Not Started`
 
 ## Next action
 
-US3/US4 done — start US5 my bookings (`GET /users/:userId/bookings`), then US6 admin add events.
+UI booking flow in progress — verify SPA in Docker + Chrome, then US5 my bookings (persisted history).

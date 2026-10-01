@@ -7,6 +7,7 @@ public record ConfirmBookingResponse(
     Long bookingId,
     String bookingStatus,
     String userId,
+    String paymentReference,
     List<BookedTicketDto> tickets
 ) {
     public record BookedTicketDto(
