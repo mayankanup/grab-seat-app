@@ -5,9 +5,14 @@ import com.grabseat.exception.ResourceNotFoundException;
 import com.grabseat.model.Event;
 import com.grabseat.repository.EventRepository;
 import com.grabseat.repository.TicketRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -45,5 +50,18 @@ public class EventService {
             event.getId(), event.getName(), event.getDescription(), event.getType(),
             event.getStartTime(), event.getEndTime(), event.getBasePrice(),
             venue, performer, ticketDtos);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EventSummaryResponse> search(String keyword, LocalDateTime start,
+                                            LocalDateTime end, int page, int pageSize) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(pageSize, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("startTime").ascending());
+        return events.search(keyword, start, end, pageable).map(e -> new EventSummaryResponse(
+            e.getId(), e.getName(), e.getDescription(), e.getType(),
+            e.getStartTime(), e.getEndTime(), e.getBasePrice(),
+            e.getVenue() != null ? e.getVenue().getName() : null,
+            e.getPerformer() != null ? e.getPerformer().getName() : null));
     }
 }
