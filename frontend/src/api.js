@@ -1,4 +1,7 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+// Same-origin by default: Vite dev proxy and Docker nginx both forward
+// /auth, /events, /bookings and /api to the backend. Set VITE_API_URL
+// only to point the SPA at a remote backend directly (needs CORS).
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 function authHeaders() {
   const token = localStorage.getItem("grabseat_token");
