@@ -95,4 +95,14 @@ class AuthControllerTest {
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.error").exists());
     }
+
+    @Test
+    void loginShortPasswordReturns400WithErrorEnvelope() throws Exception {
+        mvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"login\":\"anup\",\"password\":\"anup\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                org.hamcrest.Matchers.containsString("password")));
+    }
 }
