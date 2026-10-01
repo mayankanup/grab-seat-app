@@ -50,7 +50,15 @@ public class Event {
     public Event(String name, String description, EventType type, Venue venue,
                  Performer performer, LocalDateTime startTime, LocalDateTime endTime,
                  BigDecimal basePrice) {
-        this(name, description, type, venue, performer, startTime, endTime, basePrice, null);
+        this(name, description, type, venue, performer, startTime, endTime, basePrice, null,
+            null);
+    }
+
+    public Event(String name, String description, EventType type, Venue venue,
+                 Performer performer, LocalDateTime startTime, LocalDateTime endTime,
+                 BigDecimal basePrice, Screen screen) {
+        this(name, description, type, venue, performer, startTime, endTime, basePrice, null,
+            screen);
     }
 
     public Event(String name, String description, EventType type, Venue venue,

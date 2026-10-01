@@ -4,7 +4,6 @@ import com.grabseat.dto.*;
 import com.grabseat.exception.ResourceNotFoundException;
 import com.grabseat.model.*;
 import com.grabseat.repository.*;
-import com.grabseat.search.EventSearchIndexer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -25,19 +24,16 @@ public class AdminService {
     private final TicketRepository tickets;
     private final ScreenRepository screens;
     private final EventService eventService;
-    private final EventSearchIndexer indexer;
 
     public AdminService(VenueRepository venues, PerformerRepository performers,
                         EventRepository events, TicketRepository tickets,
-                        ScreenRepository screens, EventService eventService,
-                        EventSearchIndexer indexer) {
+                        ScreenRepository screens, EventService eventService) {
         this.venues = venues;
         this.performers = performers;
         this.events = events;
         this.tickets = tickets;
         this.screens = screens;
         this.eventService = eventService;
-        this.indexer = indexer;
     }
 
     @Transactional
@@ -197,7 +193,6 @@ public class AdminService {
         rejectScreenClash(screen, req.startTime(), req.endTime(), event.getId());
         event.update(req.name().trim(), req.description(), req.type(), venue, performer,
             req.startTime(), req.endTime(), req.basePrice(), screen);
-        indexer.indexEvent(event);
         return eventService.getEventDetails(event.getId());
     }
 
@@ -224,7 +219,6 @@ public class AdminService {
             batch.add(new Ticket(saved, "A-" + i, req.basePrice(), TicketStatus.AVAILABLE));
         }
         tickets.saveAll(batch);
-        indexer.indexEvent(saved);
         return eventService.getEventDetails(saved.getId());
     }
 
@@ -271,7 +265,6 @@ public class AdminService {
                     batch.add(new Ticket(saved, "A-" + i, req.basePrice(), TicketStatus.AVAILABLE));
                 }
                 tickets.saveAll(batch);
-                indexer.indexEvent(saved);
                 created.add(new EventSummaryResponse(saved.getId(), saved.getName(),
                     saved.getDescription(), saved.getType(), saved.getStartTime(),
                     saved.getEndTime(), saved.getBasePrice(), venue.getName(),

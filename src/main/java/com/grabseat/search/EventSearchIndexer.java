@@ -46,6 +46,19 @@ public class EventSearchIndexer {
         }
     }
 
+    @Transactional(readOnly = true)
+    public void indexEventById(long eventId) {
+        events.findById(eventId).ifPresent(this::indexEvent);
+    }
+
+    public void deleteEvent(Long eventId) {
+        try {
+            operations.delete(String.valueOf(eventId), EventSearchDocument.class);
+        } catch (Exception e) {
+            log.warn("Search index delete failed for event {}: {}", eventId, e.toString());
+        }
+    }
+
     public boolean indexHasData() {
         try {
             return operations.count(new CriteriaQuery(new Criteria()),
