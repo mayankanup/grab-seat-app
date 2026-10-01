@@ -46,7 +46,7 @@ class EventControllerTest {
             List.of(new TicketDto(1L, "A-1", new BigDecimal("349.00"), TicketStatus.AVAILABLE)));
         when(eventService.getEventDetails(1L)).thenReturn(res);
 
-        mvc.perform(get("/events/1"))
+        mvc.perform(get("/api/events/1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("Dune Evening Show"))
             .andExpect(jsonPath("$.venue.name").value("PVR Downtown Cinema"))
@@ -61,7 +61,7 @@ class EventControllerTest {
         when(eventService.search(any(), any(), any(), anyInt(), anyInt()))
             .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(summary)));
 
-        mvc.perform(get("/events/search").param("keyword", "dune"))
+        mvc.perform(get("/api/events/search").param("keyword", "dune"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].name").value("Dune Evening Show"))
             .andExpect(jsonPath("$.totalElements").value(1));

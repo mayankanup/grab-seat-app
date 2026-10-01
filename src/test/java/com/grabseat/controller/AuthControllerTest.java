@@ -46,7 +46,7 @@ class AuthControllerTest {
             eq("anup@example.com"))).thenReturn(account());
         when(jwtService.issue(any(), eq("anup"), eq("USER"))).thenReturn("jwt-token");
 
-        mvc.perform(post("/auth/register")
+        mvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(REGISTER_JSON))
             .andExpect(status().isCreated())
@@ -63,7 +63,7 @@ class AuthControllerTest {
             eq("anup@example.com")))
             .thenThrow(new ConflictException("Login already taken: anup"));
 
-        mvc.perform(post("/auth/register")
+        mvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(REGISTER_JSON))
             .andExpect(status().isConflict())
@@ -75,7 +75,7 @@ class AuthControllerTest {
         when(userService.authenticate(eq("anup"), eq("password123"))).thenReturn(account());
         when(jwtService.issue(any(), eq("anup"), eq("USER"))).thenReturn("jwt-token");
 
-        mvc.perform(post("/auth/login")
+        mvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"login\":\"anup\",\"password\":\"password123\"}"))
             .andExpect(status().isOk())
@@ -89,7 +89,7 @@ class AuthControllerTest {
         when(userService.authenticate(eq("anup"), eq("wrongpass1")))
             .thenThrow(new UnauthorizedException("Invalid credentials"));
 
-        mvc.perform(post("/auth/login")
+        mvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"login\":\"anup\",\"password\":\"wrongpass1\"}"))
             .andExpect(status().isUnauthorized())

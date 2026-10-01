@@ -41,6 +41,7 @@ Status legend: `Done` | `In Progress` | `Not Started`
 - Dynamic pricing rule + `Booking` schema from diagram.
 - Git: `US0` merged into `feature/US1-view-event`; each story stays on its own `feature/*` branch.
 - Branches created: `S0, US0-US7, INFRA-1, TEST, UI` (all `feature/*`).
+- API namespace: all backend APIs under `/api` (SPA routes never collide; nginx proxies only `/api/`).
 
 ## Next action
 

@@ -42,7 +42,7 @@ class AdminControllerTest {
     void adminCanCreateEvent() throws Exception {
         when(adminService.createEvent(any())).thenReturn(null);
 
-        mvc.perform(post("/admin/events")
+        mvc.perform(post("/api/admin/events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(EVENT_JSON))
             .andExpect(status().isCreated());
@@ -50,7 +50,7 @@ class AdminControllerTest {
 
     @Test
     void anonymousCannotCreateEvent() throws Exception {
-        mvc.perform(post("/admin/events")
+        mvc.perform(post("/api/admin/events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(EVENT_JSON))
             .andExpect(status().isUnauthorized())
@@ -60,7 +60,7 @@ class AdminControllerTest {
     @Test
     @WithMockUser(username = "7", roles = "USER")
     void userCannotCreateEvent() throws Exception {
-        mvc.perform(post("/admin/events")
+        mvc.perform(post("/api/admin/events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(EVENT_JSON))
             .andExpect(status().isForbidden());
@@ -69,7 +69,7 @@ class AdminControllerTest {
     @Test
     @WithMockUser(username = "1", roles = "ADMIN")
     void adminCanCreateVenue() throws Exception {
-        mvc.perform(post("/admin/venues")
+        mvc.perform(post("/api/admin/venues")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"Hall\",\"location\":\"Town\",\"capacity\":100}"))
             .andExpect(status().isCreated());
@@ -80,7 +80,7 @@ class AdminControllerTest {
     void adminCanCreateSchedule() throws Exception {
         when(adminService.createScheduledEvents(any())).thenReturn(List.of());
 
-        mvc.perform(post("/admin/events/schedule")
+        mvc.perform(post("/api/admin/events/schedule")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"Morning Laughs\",\"type\":\"COMEDY\",\"venueId\":3,"
                     + "\"basePrice\":299.00,\"ticketCount\":2,\"schedule\":{"
@@ -92,7 +92,7 @@ class AdminControllerTest {
     @Test
     @WithMockUser(username = "7", roles = "USER")
     void userCannotCreateSchedule() throws Exception {
-        mvc.perform(post("/admin/events/schedule")
+        mvc.perform(post("/api/admin/events/schedule")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
             .andExpect(status().isForbidden());

@@ -51,7 +51,7 @@ class BookingControllerTest {
         when(bookingService.reserve(eq(List.of(10L, 11L)), eq(7L)))
             .thenReturn(reserveResponse());
 
-        mvc.perform(post("/bookings/reserve")
+        mvc.perform(post("/api/bookings/reserve")
                 .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"ticketIds\":[10,11]}"))
@@ -67,7 +67,7 @@ class BookingControllerTest {
         when(bookingService.reserve(eq(List.of(10L)), any()))
             .thenThrow(new TicketNotAvailableException("Ticket 10 is not available"));
 
-        mvc.perform(post("/bookings/reserve")
+        mvc.perform(post("/api/bookings/reserve")
                 .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"ticketIds\":[10]}"))
@@ -77,7 +77,7 @@ class BookingControllerTest {
 
     @Test
     void reserveWithoutTokenReturns401() throws Exception {
-        mvc.perform(post("/bookings/reserve")
+        mvc.perform(post("/api/bookings/reserve")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"ticketIds\":[10]}"))
             .andExpect(status().isUnauthorized())
@@ -92,7 +92,7 @@ class BookingControllerTest {
                 new BookedTicketDto(10L, 5L, "A-1",
                     new BigDecimal("349.00"), "BOOKED"))));
 
-        mvc.perform(post("/bookings/confirm")
+        mvc.perform(post("/api/bookings/confirm")
                 .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"bookingId\":1,\"cardNumber\":\"4242424242424242\","

@@ -7,9 +7,6 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/auth": "http://localhost:8080",
-      "/events": "http://localhost:8080",
-      "/bookings": "http://localhost:8080",
       "/api": "http://localhost:8080",
     },
   },

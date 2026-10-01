@@ -26,34 +26,34 @@ async function request(path, { method = "GET", body, auth = false } = {}) {
 
 export const api = {
   login: (login, password) =>
-    request("/auth/login", { method: "POST", body: { login, password } }),
+    request("/api/auth/login", { method: "POST", body: { login, password } }),
   register: (login, password, fullName, email) =>
-    request("/auth/register", {
+    request("/api/auth/register", {
       method: "POST",
       body: { login, password, fullName, email },
     }),
   searchEvents: (keyword = "", page = 0, pageSize = 20) => {
     const q = new URLSearchParams({ page, pageSize });
     if (keyword) q.set("keyword", keyword);
-    return request(`/events/search?${q}`);
+    return request(`/api/events/search?${q}`);
   },
-  getEvent: (id) => request(`/events/${id}`),
+  getEvent: (id) => request(`/api/events/${id}`),
   reserve: (ticketIds) =>
-    request("/bookings/reserve", { method: "POST", body: { ticketIds }, auth: true }),
+    request("/api/bookings/reserve", { method: "POST", body: { ticketIds }, auth: true }),
   confirm: (bookingId, card) =>
-    request("/bookings/confirm", {
+    request("/api/bookings/confirm", {
       method: "POST",
       body: { bookingId, ...card },
       auth: true,
     }),
   createVenue: (venue) =>
-    request("/admin/venues", { method: "POST", body: venue, auth: true }),
+    request("/api/admin/venues", { method: "POST", body: venue, auth: true }),
   createPerformer: (performer) =>
-    request("/admin/performers", { method: "POST", body: performer, auth: true }),
+    request("/api/admin/performers", { method: "POST", body: performer, auth: true }),
   createEvent: (event) =>
-    request("/admin/events", { method: "POST", body: event, auth: true }),
+    request("/api/admin/events", { method: "POST", body: event, auth: true }),
   createSchedule: (run) =>
-    request("/admin/events/schedule", { method: "POST", body: run, auth: true }),
+    request("/api/admin/events/schedule", { method: "POST", body: run, auth: true }),
 };
 
 export function tokenPayload() {
