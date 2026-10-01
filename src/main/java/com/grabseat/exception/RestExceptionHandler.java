@@ -15,4 +15,22 @@ public class RestExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of("error", ex.getMessage()));
     }
+
+    @ExceptionHandler(TicketNotAvailableException.class)
+    public ResponseEntity<Map<String, String>> handleConflict(TicketNotAvailableException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(PaymentFailedException.class)
+    public ResponseEntity<Map<String, String>> handlePaymentFailed(PaymentFailedException ex) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+            .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of("error", ex.getMessage()));
+    }
 }

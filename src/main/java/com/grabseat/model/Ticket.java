@@ -26,6 +26,9 @@ public class Ticket {
 
     private String userId;
 
+    @Version
+    private Long version;
+
     protected Ticket() {
     }
 
@@ -42,4 +45,21 @@ public class Ticket {
     public BigDecimal getPrice() { return price; }
     public TicketStatus getStatus() { return status; }
     public String getUserId() { return userId; }
+
+    public void reserve(String userId) {
+        if (status != TicketStatus.AVAILABLE) {
+            throw new com.grabseat.exception.TicketNotAvailableException(
+                "Ticket " + id + " is not available (status=" + status + ")");
+        }
+        this.status = TicketStatus.RESERVED;
+        this.userId = userId;
+    }
+
+    public void confirm(String userId) {
+        if (status != TicketStatus.RESERVED || !userId.equals(this.userId)) {
+            throw new com.grabseat.exception.TicketNotAvailableException(
+                "Ticket " + id + " cannot be confirmed by user " + userId);
+        }
+        this.status = TicketStatus.BOOKED;
+    }
 }
