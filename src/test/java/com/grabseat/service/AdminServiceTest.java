@@ -154,4 +154,31 @@ class AdminServiceTest {
         assertThatThrownBy(() -> service.createScheduledEvents(bad))
             .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void updateVenueSavesChanges() {
+        Venue venue = new Venue("Old", "Town", 100);
+        when(venues.findById(3L)).thenReturn(Optional.of(venue));
+
+        var dto = service.updateVenue(3L, "New Hall", "City", 200);
+
+        assertThat(dto.name()).isEqualTo("New Hall");
+        assertThat(dto.capacity()).isEqualTo(200);
+    }
+
+    @Test
+    void updateVenueMissingThrows404() {
+        when(venues.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateVenue(99L, "X", "Y", 10))
+            .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void listVenuesReturnsAll() {
+        when(venues.findAll(org.springframework.data.domain.Sort.by("id"))).thenReturn(
+            List.of(new Venue("A", "X", 10), new Venue("B", "Y", 20)));
+
+        assertThat(service.listVenues()).hasSize(2);
+    }
 }

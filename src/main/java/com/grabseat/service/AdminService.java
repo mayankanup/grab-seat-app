@@ -4,6 +4,9 @@ import com.grabseat.dto.*;
 import com.grabseat.exception.ResourceNotFoundException;
 import com.grabseat.model.*;
 import com.grabseat.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +43,68 @@ public class AdminService {
     public PerformerDto createPerformer(String name, String type) {
         Performer saved = performers.save(new Performer(name.trim(), type.trim()));
         return new PerformerDto(saved.getId(), saved.getName(), saved.getType());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VenueDto> listVenues() {
+        return venues.findAll(Sort.by("id")).stream()
+            .map(v -> new VenueDto(v.getId(), v.getName(), v.getLocation(), v.getCapacity()))
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PerformerDto> listPerformers() {
+        return performers.findAll(Sort.by("id")).stream()
+            .map(p -> new PerformerDto(p.getId(), p.getName(), p.getType()))
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EventSummaryResponse> listEvents(int page, int pageSize) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(pageSize, 1), 100);
+        return events.findAll(PageRequest.of(safePage, safeSize, Sort.by("startTime").ascending()))
+            .map(e -> new EventSummaryResponse(e.getId(), e.getName(), e.getDescription(),
+                e.getType(), e.getStartTime(), e.getEndTime(), e.getBasePrice(),
+                e.getVenue() != null ? e.getVenue().getName() : null,
+                e.getPerformer() != null ? e.getPerformer().getName() : null));
+    }
+
+    @Transactional
+    public VenueDto updateVenue(Long id, String name, String location, Integer capacity) {
+        Venue venue = venues.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Venue not found: " + id));
+        venue.update(name.trim(), location.trim(), capacity);
+        return new VenueDto(venue.getId(), venue.getName(), venue.getLocation(),
+            venue.getCapacity());
+    }
+
+    @Transactional
+    public PerformerDto updatePerformer(Long id, String name, String type) {
+        Performer performer = performers.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Performer not found: " + id));
+        performer.update(name.trim(), type.trim());
+        return new PerformerDto(performer.getId(), performer.getName(), performer.getType());
+    }
+
+    @Transactional
+    public EventDetailsResponse updateEvent(Long id, UpdateEventRequest req) {
+        if (req.endTime() != null && !req.endTime().isAfter(req.startTime())) {
+            throw new IllegalArgumentException("endTime must be after startTime");
+        }
+        Event event = events.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
+        Venue venue = venues.findById(req.venueId())
+            .orElseThrow(() -> new ResourceNotFoundException("Venue not found: " + req.venueId()));
+        Performer performer = null;
+        if (req.performerId() != null) {
+            performer = performers.findById(req.performerId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "Performer not found: " + req.performerId()));
+        }
+        event.update(req.name().trim(), req.description(), req.type(), venue, performer,
+            req.startTime(), req.endTime(), req.basePrice());
+        return eventService.getEventDetails(event.getId());
     }
 
     @Transactional
