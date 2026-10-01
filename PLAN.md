@@ -13,8 +13,8 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | ID | User story / task | Maps to requirements | Status | Evidence / notes |
 |----|-------------------|----------------------|--------|------------------|
 | S0 | Project scaffold: Spring Boot, JPA, Postgres, `docker-compose.yml`, `GET /api/health` | Tech guidelines 2,3 | Done | `pom.xml`, `docker-compose.yml`, `HealthController.java`; verified `mvn -q compile -DskipTests` OK |
-| US0 | Seed DB with movies + comedy shows | New request (demo data for 1-4) | In Progress | `model/ Venue,Performer,Event,EventType,Ticket,TicketStatus`, `repository/*`, `seed/DataSeeder.java` (3 movies + 3 comedy, 40 tickets/event, idempotent skip if `events.count()>0`); compiles OK; pending: Postgres run + git commit |
-| US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | Not Started | Needs service + controller + DTO; Redis event-cache later |
+| US0 | Seed DB with movies + comedy shows | New request (demo data for 1-4) | Done | Committed `54530bc` on `feature/US0-seed-movies-comedy`; compiles OK; DB live-run pending (Docker offline) |
+| US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | Done | `controller/EventController`, `service/EventService`, `dto/*`, `exception/*`; `EventServiceTest` + `EventControllerTest` 2/2 pass; 404 via `ResourceNotFoundException` |
 | US2 | Search events: `GET /events/search?keyword,start,end,pageSize,page` | Core 2; API 2 | Not Started | Start DB-only; ES + CDC/Kafka later. Note spec mismatch: diagram uses `term,location,type,date` — to confirm |
 | US3 | Reserve ticket: `reserve(ticketId,userId)` → `POST /bookings/reserve` | Core 3; API 3 | Not Started | Needs Redis ticket-lock `{ticketId:userId} TTL 10min` + virtual waiting queue |
 | US4 | Confirm payment: `confirm(ticketId,userId,paymentDetails)` → `POST /bookings/confirm` | Core 3; API 4 | Not Started | Stripe mock; mark `BOOKED`, create `Booking` |
@@ -38,8 +38,9 @@ Status legend: `Done` | `In Progress` | `Not Started`
 - Search params: unify `keyword/start/end` vs `term/location/type/date`.
 - `reserve/confirm` REST shape (proposed above).
 - Dynamic pricing rule + `Booking` schema from diagram.
-- Git: worktree has only `bc9b159 Initial requirements`; S0/US0 files untracked — commit next.
+- Git: `US0` merged into `feature/US1-view-event`; each story stays on its own `feature/*` branch.
+- Branches created: `S0, US0-US7, INFRA-1, TEST, UI` (all `feature/*`).
 
 ## Next action
 
-Run DB verification + `git add/commit` for US0, then start US1.
+US1 done — start US2 DB-backed search (`GET /events/search`), then US3/US4 reserve+confirm.
