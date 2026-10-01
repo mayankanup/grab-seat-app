@@ -1,22 +1,20 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const next = location.state?.next ?? "/";
 
   async function submit(e) {
     e.preventDefault();
     setError("");
     try {
-      await login(id.trim(), password);
-      navigate(next, { replace: true });
+      await register(id.trim(), password);
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err.message);
     }
@@ -24,7 +22,10 @@ export default function LoginPage() {
 
   return (
     <div className="card narrow">
-      <h2>Login</h2>
+      <h2>Create account</h2>
+      <p className="muted">
+        User id: 3–32 chars (letters, digits, . _ -). Password: min 8 chars.
+      </p>
       <form onSubmit={submit}>
         <input
           placeholder="user id, e.g. anup"
@@ -33,16 +34,15 @@ export default function LoginPage() {
         />
         <input
           type="password"
-          placeholder="password"
+          placeholder="password (min 8 chars)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit">Login</button>
+        <button type="submit">Register</button>
       </form>
       {error && <p className="error">{error}</p>}
       <p className="muted">
-        New here? <Link to="/register">Create an account</Link> · Browsing is
-        public — <Link to="/">back to events</Link>.
+        Already have one? <Link to="/login">Login</Link>
       </p>
     </div>
   );

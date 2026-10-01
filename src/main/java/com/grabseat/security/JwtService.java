@@ -26,6 +26,7 @@ public class JwtService {
         Date now = new Date();
         return Jwts.builder()
             .subject(userId)
+            .claim("userId", userId)
             .issuedAt(now)
             .expiration(new Date(now.getTime() + expirationMs))
             .signWith(key)
@@ -33,11 +34,12 @@ public class JwtService {
     }
 
     public String parseUserId(String token) throws JwtException {
-        return Jwts.parser()
+        var claims = Jwts.parser()
             .verifyWith(key)
             .build()
             .parseSignedClaims(token)
-            .getPayload()
-            .getSubject();
+            .getPayload();
+        String userId = claims.get("userId", String.class);
+        return userId != null ? userId : claims.getSubject();
     }
 }

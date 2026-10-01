@@ -20,6 +20,16 @@ class JwtServiceTest {
     }
 
     @Test
+    void issuedTokenCarriesExplicitUserIdClaim() {
+        String token = service.issue("user-1");
+        String payload = new String(
+            java.util.Base64.getUrlDecoder().decode(token.split("\\.")[1]),
+            java.nio.charset.StandardCharsets.UTF_8);
+
+        assertThat(payload).contains("\"userId\":\"user-1\"");
+    }
+
+    @Test
     void tamperedTokenIsRejected() {
         String token = service.issue("user-1");
 

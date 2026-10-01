@@ -9,11 +9,18 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("grabseat_token");
       return null;
     }
-    return tokenPayload().sub;
+    const payload = tokenPayload();
+    return payload.userId ?? payload.sub;
   });
 
-  const login = useCallback(async (id) => {
-    const res = await api.login(id);
+  const login = useCallback(async (id, password) => {
+    const res = await api.login(id, password);
+    localStorage.setItem("grabseat_token", res.token);
+    setUserId(res.userId);
+  }, []);
+
+  const register = useCallback(async (id, password) => {
+    const res = await api.register(id, password);
     localStorage.setItem("grabseat_token", res.token);
     setUserId(res.userId);
   }, []);
@@ -24,8 +31,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ userId, authenticated: !!userId && isTokenValid(), login, logout }),
-    [userId, login, logout]
+    () => ({
+      userId,
+      authenticated: !!userId && isTokenValid(),
+      login,
+      register,
+      logout,
+    }),
+    [userId, login, register, logout]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
