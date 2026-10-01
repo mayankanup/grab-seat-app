@@ -22,12 +22,32 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/grabseat
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
     ports:
       - "8080:8080"
+
+  elasticsearch:
+    image: elasticsearch:8.15.0
+    container_name: grabseat-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - grabseat-esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
   web:
     build: ./frontend
@@ -39,3 +59,4 @@ services:
 
 volumes:
   grabseat-pgdata:
+  grabseat-esdata:

@@ -37,6 +37,8 @@ class AdminServiceTest {
     ScreenRepository screens;
     @Mock
     EventService eventService;
+    @Mock
+    com.grabseat.search.EventSearchIndexer indexer;
 
     @InjectMocks
     AdminService service;
