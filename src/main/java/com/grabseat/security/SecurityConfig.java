@@ -26,7 +26,7 @@ public class SecurityConfig {
     private final List<String> allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtFilter,
-                          @Value("${app.cors.allowed-origins:http://localhost:5173}") String origins) {
+                          @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}") String origins) {
         this.jwtFilter = jwtFilter;
         this.allowedOrigins = Arrays.stream(origins.split(",")).map(String::trim).toList();
     }
