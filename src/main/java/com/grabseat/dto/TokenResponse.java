@@ -1,7 +1,10 @@
 package com.grabseat.dto;
 
 public record TokenResponse(
-    String userId,
+    Long userId,
+    String login,
+    String fullName,
+    String email,
     String token
 ) {
 }

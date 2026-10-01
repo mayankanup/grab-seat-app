@@ -22,22 +22,32 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
-    public String issue(String userId) {
+    public String issue(Long userId, String login) {
         Date now = new Date();
         return Jwts.builder()
-            .subject(userId)
+            .subject(String.valueOf(userId))
+            .claim("userId", userId)
+            .claim("login", login)
             .issuedAt(now)
             .expiration(new Date(now.getTime() + expirationMs))
             .signWith(key)
             .compact();
     }
 
-    public String parseUserId(String token) throws JwtException {
-        return Jwts.parser()
+    public Long parseUserId(String token) throws JwtException {
+        var claims = Jwts.parser()
             .verifyWith(key)
             .build()
             .parseSignedClaims(token)
-            .getPayload()
-            .getSubject();
+            .getPayload();
+        Number userId = claims.get("userId", Number.class);
+        if (userId != null) {
+            return userId.longValue();
+        }
+        try {
+            return Long.valueOf(claims.getSubject());
+        } catch (NumberFormatException e) {
+            throw new JwtException("Token has no numeric user id; please log in again");
+        }
     }
 }

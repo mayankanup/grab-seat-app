@@ -5,6 +5,7 @@ import EventDetailPage from "./pages/EventDetailPage";
 import EventListPage from "./pages/EventListPage";
 import LoginPage from "./pages/LoginPage";
 import PaymentPage from "./pages/PaymentPage";
+import RegisterPage from "./pages/RegisterPage";
 import "./App.css";
 
 function RequireAuth({ children }) {
@@ -17,7 +18,7 @@ function RequireAuth({ children }) {
 }
 
 function Header() {
-  const { userId, authenticated, logout } = useAuth();
+  const { displayName, authenticated, logout } = useAuth();
   return (
     <header className="bar">
       <Link to="/" className="brand">
@@ -26,7 +27,7 @@ function Header() {
       <span>
         {authenticated ? (
           <>
-            {userId} <button onClick={logout}>Logout</button>
+            {displayName} <button onClick={logout}>Logout</button>
           </>
         ) : (
           <Link to="/login">Login</Link>
@@ -44,6 +45,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<EventListPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
           <Route
             path="/booking"

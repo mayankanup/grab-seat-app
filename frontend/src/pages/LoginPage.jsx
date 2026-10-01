@@ -4,6 +4,7 @@ import { useAuth } from "../auth";
 
 export default function LoginPage() {
   const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     try {
-      await login(id.trim());
+      await login(id.trim(), password);
       navigate(next, { replace: true });
     } catch (err) {
       setError(err.message);
@@ -24,18 +25,24 @@ export default function LoginPage() {
   return (
     <div className="card narrow">
       <h2>Login</h2>
-      <p className="muted">Dev login — any user id gets a JWT (passwords arrive later).</p>
       <form onSubmit={submit}>
         <input
-          placeholder="user id, e.g. anup"
+          placeholder="login, e.g. anup"
           value={id}
           onChange={(e) => setId(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button type="submit">Login</button>
       </form>
       {error && <p className="error">{error}</p>}
       <p className="muted">
-        Browsing is public — <Link to="/">back to events</Link>.
+        New here? <Link to="/register">Create an account</Link> · Browsing is
+        public — <Link to="/">back to events</Link>.
       </p>
     </div>
   );

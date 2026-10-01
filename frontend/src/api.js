@@ -25,8 +25,13 @@ async function request(path, { method = "GET", body, auth = false } = {}) {
 }
 
 export const api = {
-  login: (userId) =>
-    request("/auth/login", { method: "POST", body: { userId } }),
+  login: (login, password) =>
+    request("/auth/login", { method: "POST", body: { login, password } }),
+  register: (login, password, fullName, email) =>
+    request("/auth/register", {
+      method: "POST",
+      body: { login, password, fullName, email },
+    }),
   searchEvents: (keyword = "", page = 0, pageSize = 20) => {
     const q = new URLSearchParams({ page, pageSize });
     if (keyword) q.set("keyword", keyword);

@@ -4,6 +4,7 @@ import com.grabseat.dto.ConfirmBookingRequest;
 import com.grabseat.dto.ConfirmBookingResponse;
 import com.grabseat.dto.ReserveTicketsRequest;
 import com.grabseat.dto.ReserveTicketsResponse;
+import com.grabseat.exception.UnauthorizedException;
 import com.grabseat.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,12 +27,20 @@ public class BookingController {
     @ResponseStatus(HttpStatus.CREATED)
     public ReserveTicketsResponse reserve(@Valid @RequestBody ReserveTicketsRequest req,
                                           Authentication auth) {
-        return bookingService.reserve(req.ticketIds(), auth.getName());
+        return bookingService.reserve(req.ticketIds(), currentUserId(auth));
     }
 
     @PostMapping("/confirm")
     public ConfirmBookingResponse confirm(@Valid @RequestBody ConfirmBookingRequest req,
                                           Authentication auth) {
-        return bookingService.confirm(req.bookingId(), auth.getName(), req);
+        return bookingService.confirm(req.bookingId(), currentUserId(auth), req);
+    }
+
+    private Long currentUserId(Authentication auth) {
+        try {
+            return Long.valueOf(auth.getName());
+        } catch (NumberFormatException e) {
+            throw new UnauthorizedException("Invalid token subject; please log in again");
+        }
     }
 }

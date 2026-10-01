@@ -1,5 +1,6 @@
 package com.grabseat.service;
 
+import com.grabseat.dto.BookedTicketDto;
 import com.grabseat.dto.ConfirmBookingRequest;
 import com.grabseat.dto.ConfirmBookingResponse;
 import com.grabseat.dto.ReserveTicketsResponse;
@@ -34,9 +35,9 @@ public class BookingService {
     }
 
     @Transactional
-    public ReserveTicketsResponse reserve(List<Long> ticketIds, String userId) {
+    public ReserveTicketsResponse reserve(List<Long> ticketIds, Long userId) {
         List<Long> ids = requireIds(ticketIds);
-        requireText(userId, "userId is required");
+        requireId(userId);
         List<Ticket> locked = tickets.findAllByIdInForUpdate(ids);
         if (locked.size() != ids.size()) {
             throw new ResourceNotFoundException("One or more tickets not found: " + ids);
@@ -50,11 +51,11 @@ public class BookingService {
     }
 
     @Transactional
-    public ConfirmBookingResponse confirm(Long bookingId, String userId, ConfirmBookingRequest payment) {
-        requireText(userId, "userId is required");
+    public ConfirmBookingResponse confirm(Long bookingId, Long userId, ConfirmBookingRequest payment) {
+        requireId(userId);
         Booking booking = bookings.findById(bookingId)
             .orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + bookingId));
-        if (!booking.getUserId().equals(userId)) {
+        if (!userId.equals(booking.getUserId())) {
             throw new TicketNotAvailableException(
                 "Booking " + bookingId + " belongs to another user");
         }
@@ -88,15 +89,19 @@ public class BookingService {
         }
     }
 
-    private List<ReserveTicketsResponse.BookedTicketDto> linesOf(Booking booking) {
-        return booking.getTickets().stream().map(t -> new ReserveTicketsResponse.BookedTicketDto(
+    private void requireId(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required");
+        }
+    }
+
+    private List<BookedTicketDto> linesOf(Booking booking) {
+        return booking.getTickets().stream().map(t -> new BookedTicketDto(
             t.getId(), t.getEvent() != null ? t.getEvent().getId() : null,
             t.getSeatNumber(), t.getPrice(), t.getStatus().name())).toList();
     }
 
-    private List<ConfirmBookingResponse.BookedTicketDto> confirmLinesOf(Booking booking) {
-        return booking.getTickets().stream().map(t -> new ConfirmBookingResponse.BookedTicketDto(
-            t.getId(), t.getEvent() != null ? t.getEvent().getId() : null,
-            t.getSeatNumber(), t.getPrice(), t.getStatus().name())).toList();
+    private List<BookedTicketDto> confirmLinesOf(Booking booking) {
+        return linesOf(booking);
     }
 }
