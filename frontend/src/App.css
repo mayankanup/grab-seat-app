@@ -73,6 +73,33 @@ input {
   border-radius: 4px;
   font-size: 1rem;
 }
+select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: #fff;
+}
+.field {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.field > span {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+.field input,
+.field select {
+  width: 100%;
+  box-sizing: border-box;
+}
+.success {
+  color: #1a7f37;
+}
+button.picked {
+  outline: 2px solid #1d1d2c;
+}
 form input {
   width: 100%;
   box-sizing: border-box;
