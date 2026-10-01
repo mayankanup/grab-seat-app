@@ -15,9 +15,9 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | S0 | Project scaffold: Spring Boot, JPA, Postgres, `docker-compose.yml`, `GET /api/health` | Tech guidelines 2,3 | Done | `pom.xml`, `docker-compose.yml`, `HealthController.java`; verified `mvn -q compile -DskipTests` OK |
 | US0 | Seed DB with movies + comedy shows | New request (demo data for 1-4) | Done | Merged PR #1; live-verified in Docker: `GET /events/1` = Dune show, 40 tickets |
 | US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | Done | Merged PR #2; `EventServiceTest` + `EventControllerTest` 2/2 pass; live-verified in Docker |
-| US2 | Search events: `GET /events/search?keyword,start,end,pageSize,page` | Core 2; API 2 | Done | DB-only `EventRepository.search` + `EventService.search` + `GET /events/search`; `EventServiceTest` + `EventControllerTest` 4/4 pass; ES + CDC/Kafka later |
-| US3 | Reserve ticket: `reserve(ticketId,userId)` → `POST /bookings/reserve` | Core 3; API 3 | Not Started | Needs Redis ticket-lock `{ticketId:userId} TTL 10min` + virtual waiting queue |
-| US4 | Confirm payment: `confirm(ticketId,userId,paymentDetails)` → `POST /bookings/confirm` | Core 3; API 4 | Not Started | Stripe mock; mark `BOOKED`, create `Booking` |
+| US2 | Search events: `GET /events/search?keyword,start,end,pageSize,page` | Core 2; API 2 | Done | Merged PR #4; Specifications-based `EventService.search` + `GET /events/search`; 4/4 pass; live-verified in Docker; ES + CDC/Kafka later |
+| US3 | Reserve tickets: `POST /bookings/reserve {ticketIds[]}` | Core 3; API 3 | Done | Multi-ticket `Booking` + `ReserveTicketsRequest/Response` pairs; JWT principal; pessimistic lock + 201; 18/18 pass; live-verified in Docker; Redis lock + queue later |
+| US4 | Confirm booking: `POST /bookings/confirm {bookingId,paymentToken}` | Core 3; API 4 | Done | `ConfirmBookingRequest/Response` pairs; Stripe mock (`tok_*`, `fail*` → 402); 409 wrong-user/reuse, 404 unknown booking; live-verified in Docker |
 | US5 | View my bookings: `GET /users/:userId/bookings` | Core 4 | Not Started | Needs `Booking(id,userId,tickets)` entity |
 | US6 | Admin add events: `POST /events`, `POST /venues`, `POST /performers` | Core 5 | Not Started | Role check (admin/coordinator) at Gateway |
 | US7 | Dynamic pricing for popular events | Core 6 | Not Started | Rule TBD (e.g. sold% >80% → surge multiplier); apply on view/reserve |
@@ -43,4 +43,4 @@ Status legend: `Done` | `In Progress` | `Not Started`
 
 ## Next action
 
-US2 done — start US3/US4 reserve+confirm (`POST /bookings/reserve`, `POST /bookings/confirm` with Redis lock).
+US3/US4 done — start US5 my bookings (`GET /users/:userId/bookings`), then US6 admin add events.
