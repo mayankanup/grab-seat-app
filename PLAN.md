@@ -14,7 +14,7 @@ Status legend: `Done` | `In Progress` | `Not Started`
 |----|-------------------|----------------------|--------|------------------|
 | S0 | Project scaffold: Spring Boot, JPA, Postgres, `docker-compose.yml`, `GET /api/health` | Tech guidelines 2,3 | Done | `pom.xml`, `docker-compose.yml`, `HealthController.java`; verified `mvn -q compile -DskipTests` OK |
 | US0 | Seed DB with movies + comedy shows | New request (demo data for 1-4) | Done | Committed `54530bc` on `feature/US0-seed-movies-comedy`; compiles OK; DB live-run pending (Docker offline) |
-| US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | In Progress | Implementing service + controller + DTO; Redis event-cache later |
+| US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | Done | `controller/EventController`, `service/EventService`, `dto/*`, `exception/*`; `EventServiceTest` + `EventControllerTest` 2/2 pass; 404 via `ResourceNotFoundException` |
 | US2 | Search events: `GET /events/search?keyword,start,end,pageSize,page` | Core 2; API 2 | Not Started | Start DB-only; ES + CDC/Kafka later. Note spec mismatch: diagram uses `term,location,type,date` — to confirm |
 | US3 | Reserve ticket: `reserve(ticketId,userId)` → `POST /bookings/reserve` | Core 3; API 3 | Not Started | Needs Redis ticket-lock `{ticketId:userId} TTL 10min` + virtual waiting queue |
 | US4 | Confirm payment: `confirm(ticketId,userId,paymentDetails)` → `POST /bookings/confirm` | Core 3; API 4 | Not Started | Stripe mock; mark `BOOKED`, create `Booking` |
@@ -43,4 +43,4 @@ Status legend: `Done` | `In Progress` | `Not Started`
 
 ## Next action
 
-Finish US1 (`GET /events/:eventId`), compile + commit, then start US2.
+US1 done — start US2 DB-backed search (`GET /events/search`), then US3/US4 reserve+confirm.
