@@ -2,13 +2,10 @@ package com.grabseat.search;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grabseat.model.Event;
-import com.grabseat.repository.EventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Debezium CDC consumer: Postgres WAL -> Debezium Server -> Kafka topic
@@ -24,13 +21,10 @@ public class EventCdcConsumer {
     static final String TOPIC = "dbserver1.public.events";
 
     private final ObjectMapper mapper;
-    private final EventRepository events;
     private final EventSearchIndexer indexer;
 
-    public EventCdcConsumer(ObjectMapper mapper, EventRepository events,
-                            EventSearchIndexer indexer) {
+    public EventCdcConsumer(ObjectMapper mapper, EventSearchIndexer indexer) {
         this.mapper = mapper;
-        this.events = events;
         this.indexer = indexer;
     }
 
@@ -58,12 +52,7 @@ public class EventCdcConsumer {
         }
         long id = envelope.path("after").path("id").asLong(-1);
         if (id > 0) {
-            indexById(id);
+            indexer.indexEventById(id);
         }
-    }
-
-    @Transactional(readOnly = true)
-    void indexById(long id) {
-        events.findById(id).ifPresent(indexer::indexEvent);
     }
 }

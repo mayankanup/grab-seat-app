@@ -26,7 +26,7 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | UI | React SPA: login, event list, event detail, booking, payment | Tech 5 | In Progress | `frontend/` (Vite + Router); public browse, JWT login-gated reserve→pay→confirm with token reuse; `web` compose service + nginx proxy; CORS for Vite dev |
 | AUTH-1 | User registration + password login (persisted) | New request | In Progress | `users` table (id internal; login unique; fullName; email unique for booking mail); `POST /auth/register` 201 + `POST /auth/login` 401; JWT sub=id plus userId/login claims; bookings keyed by internal id; SPA register page |
 | SCREENS | Multiplex screens: CRUD, show assignment, per-screen clash | New request | Done | `screens` table, `Event.screen`, `POST|GET|PUT /api/admin/screens`, screen-aware scheduling (capacity default, venue check, real-DB clash spec); seeded Screen 1; SPA pickers + screen display; 64/64 pass; live-verified in Docker |
-| SEARCH-ES | Elasticsearch search fed by CDC, DB fallback | Core 2; FinalArchitecture | Done | CDC consumer upserts/deletes docs (idempotent, poison-safe); dual-write removed; backfill kept; 72/72 pass; live: create→topic→index→search plus rename propagation verified |
+| SEARCH-ES | Elasticsearch search fed by CDC, DB fallback | Core 2; FinalArchitecture | Done | CDC consumer upserts/deletes docs (idempotent, poison-safe, tx in indexer bean); dual-write removed; backfill kept; 73/73 pass; live log-traced create→WAL→topic→index→search |
 
 ## Plan of action (in order)
 

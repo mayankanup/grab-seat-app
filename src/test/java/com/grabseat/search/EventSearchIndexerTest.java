@@ -49,6 +49,17 @@ class EventSearchIndexerTest {
     }
 
     @Test
+    void indexEventByIdLoadsAndSaves() {
+        when(events.findById(42L)).thenReturn(java.util.Optional.of(event()));
+        when(operations.indexOps(any(Class.class))).thenReturn(indexOps);
+        when(indexOps.exists()).thenReturn(true);
+
+        indexer.indexEventById(42L);
+
+        verify(operations).save(any(EventSearchDocument.class));
+    }
+
+    @Test
     void indexEventSwallowsElasticsearchOutage() {
         when(operations.indexOps(any(Class.class)))
             .thenThrow(new RuntimeException("down"));
