@@ -54,6 +54,16 @@ export const api = {
     request("/api/admin/events", { method: "POST", body: event, auth: true }),
   createSchedule: (run) =>
     request("/api/admin/events/schedule", { method: "POST", body: run, auth: true }),
+  listVenues: () => request("/api/admin/venues", { auth: true }),
+  listPerformers: () => request("/api/admin/performers", { auth: true }),
+  listEvents: (page = 0, pageSize = 50) =>
+    request(`/api/admin/events?page=${page}&pageSize=${pageSize}`, { auth: true }),
+  updateVenue: (id, venue) =>
+    request(`/api/admin/venues/${id}`, { method: "PUT", body: venue, auth: true }),
+  updatePerformer: (id, performer) =>
+    request(`/api/admin/performers/${id}`, { method: "PUT", body: performer, auth: true }),
+  updateEvent: (id, event) =>
+    request(`/api/admin/events/${id}`, { method: "PUT", body: event, auth: true }),
 };
 
 export function tokenPayload() {

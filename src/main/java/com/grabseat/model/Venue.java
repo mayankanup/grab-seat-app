@@ -31,4 +31,10 @@ public class Venue {
     public String getName() { return name; }
     public String getLocation() { return location; }
     public Integer getCapacity() { return capacity; }
+
+    public void update(String name, String location, Integer capacity) {
+        this.name = name;
+        this.location = location;
+        this.capacity = capacity;
+    }
 }

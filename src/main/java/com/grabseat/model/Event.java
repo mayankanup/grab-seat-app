@@ -73,4 +73,17 @@ public class Event {
     public LocalDateTime getEndTime() { return endTime; }
     public BigDecimal getBasePrice() { return basePrice; }
     public String getSeriesId() { return seriesId; }
+
+    public void update(String name, String description, EventType type, Venue venue,
+                       Performer performer, LocalDateTime startTime, LocalDateTime endTime,
+                       BigDecimal basePrice) {
+        this.name = name;
+        this.description = description;
+        this.type = type;
+        this.venue = venue;
+        this.performer = performer;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.basePrice = basePrice;
+    }
 }

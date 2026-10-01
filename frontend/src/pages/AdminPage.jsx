@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api";
 
 function Section({ title, children }) {
@@ -16,22 +16,28 @@ function Result({ result, error }) {
   return <pre className="muted">{JSON.stringify(result, null, 2)}</pre>;
 }
 
+const emptyVenue = { name: "", location: "", capacity: 100 };
+const emptyPerformer = { name: "", type: "COMEDIAN" };
+const emptyEvent = {
+  name: "",
+  description: "",
+  type: "COMEDY",
+  venueId: "",
+  performerId: "",
+  startTime: "",
+  endTime: "",
+  basePrice: "",
+  ticketCount: 40,
+};
+
 export default function AdminPage() {
-  const [venue, setVenue] = useState({ name: "", location: "", capacity: 100 });
-  const [performer, setPerformer] = useState({ name: "", type: "COMEDIAN" });
-  const [event, setEvent] = useState({
-    name: "",
-    description: "",
-    type: "COMEDY",
-    venueId: "",
-    performerId: "",
-    startTime: "",
-    endTime: "",
-    basePrice: "",
-    ticketCount: 40,
-  });
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
+  const [venues, setVenues] = useState([]);
+  const [performers, setPerformers] = useState([]);
+  const [shows, setShows] = useState([]);
+  const [venue, setVenue] = useState(emptyVenue);
+  const [performer, setPerformer] = useState(emptyPerformer);
+  const [event, setEvent] = useState(emptyEvent);
+  const [editing, setEditing] = useState({ venue: null, performer: null, event: null });
   const [run, setRun] = useState({
     name: "",
     description: "",
@@ -45,59 +51,148 @@ export default function AdminPage() {
     showTimes: "08:00, 10:00",
     durationMinutes: 90,
   });
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
 
-  async function submit(fn, payload, coerce) {
-    setError("");
-    setResult(null);
+  const num = (v) => (v === "" ? null : Number(v));
+
+  async function refresh() {
     try {
-      setResult(await fn(coerce ? coerce(payload) : payload));
+      const [v, p, e] = await Promise.all([
+        api.listVenues(),
+        api.listPerformers(),
+        api.listEvents(0, 50),
+      ]);
+      setVenues(v);
+      setPerformers(p);
+      setShows(e.content ?? []);
     } catch (err) {
       setError(err.message);
     }
   }
 
-  const num = (v) => (v === "" ? null : Number(v));
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  async function save(kind, payload) {
+    setError("");
+    setResult(null);
+    try {
+      const res = await kind.fn(...kind.args(payload));
+      setResult(res);
+      setEditing({ venue: null, performer: null, event: null });
+      setVenue(emptyVenue);
+      setPerformer(emptyPerformer);
+      setEvent(emptyEvent);
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function editVenue(v) {
+    setEditing({ venue: v.id, performer: null, event: null });
+    setVenue({ name: v.name, location: v.location, capacity: v.capacity });
+  }
+
+  function editPerformer(p) {
+    setEditing({ venue: null, performer: p.id, event: null });
+    setPerformer({ name: p.name, type: p.type });
+  }
+
+  function editEvent(e) {
+    setEditing({ venue: null, performer: null, event: e.id });
+    setEvent({
+      name: e.name,
+      description: e.description ?? "",
+      type: e.type,
+      venueId: "",
+      performerId: "",
+      startTime: e.startTime?.slice(0, 19) ?? "",
+      endTime: e.endTime?.slice(0, 19) ?? "",
+      basePrice: e.basePrice,
+      ticketCount: 40,
+    });
+  }
 
   return (
     <div>
       <h2>Admin</h2>
-      <Section title="Create venue">
+      <Section title="Venues">
+        <ul>
+          {venues.map((v) => (
+            <li key={v.id}>
+              #{v.id} {v.name} · {v.location} · cap {v.capacity}{" "}
+              <button onClick={() => editVenue(v)}>Edit</button>
+            </li>
+          ))}
+        </ul>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            submit(api.createVenue, venue, (v) => ({ ...v, capacity: Number(v.capacity) }));
+            const payload = { ...venue, capacity: Number(venue.capacity) };
+            if (editing.venue) {
+              save({ fn: api.updateVenue, args: [editing.venue] }, payload);
+            } else {
+              save({ fn: api.createVenue, args: [] }, payload);
+            }
           }}
         >
           <input placeholder="name" value={venue.name} onChange={(e) => setVenue({ ...venue, name: e.target.value })} />
           <input placeholder="location" value={venue.location} onChange={(e) => setVenue({ ...venue, location: e.target.value })} />
           <input placeholder="capacity" value={venue.capacity} onChange={(e) => setVenue({ ...venue, capacity: e.target.value })} />
-          <button type="submit">Create venue</button>
+          <button type="submit">{editing.venue ? `Save venue #${editing.venue}` : "Create venue"}</button>
         </form>
       </Section>
-      <Section title="Create performer">
+      <Section title="Performers">
+        <ul>
+          {performers.map((p) => (
+            <li key={p.id}>
+              #{p.id} {p.name} · {p.type}{" "}
+              <button onClick={() => editPerformer(p)}>Edit</button>
+            </li>
+          ))}
+        </ul>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            submit(api.createPerformer, performer);
+            if (editing.performer) {
+              save({ fn: api.updatePerformer, args: [editing.performer] }, performer);
+            } else {
+              save({ fn: api.createPerformer, args: [] }, performer);
+            }
           }}
         >
           <input placeholder="name" value={performer.name} onChange={(e) => setPerformer({ ...performer, name: e.target.value })} />
           <input placeholder="type, e.g. COMEDIAN" value={performer.type} onChange={(e) => setPerformer({ ...performer, type: e.target.value })} />
-          <button type="submit">Create performer</button>
+          <button type="submit">{editing.performer ? `Save performer #${editing.performer}` : "Create performer"}</button>
         </form>
       </Section>
-      <Section title="Create event">
+      <Section title="Events (first 50)">
+        <ul>
+          {shows.map((s) => (
+            <li key={s.id}>
+              #{s.id} {s.name} · {s.venueName}{" "}
+              <button onClick={() => editEvent(s)}>Edit</button>
+            </li>
+          ))}
+        </ul>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            submit(api.createEvent, event, (v) => ({
-              ...v,
-              venueId: num(v.venueId),
-              performerId: v.performerId === "" ? null : num(v.performerId),
-              endTime: v.endTime === "" ? null : v.endTime,
-              basePrice: v.basePrice,
-              ticketCount: Number(v.ticketCount),
-            }));
+            const payload = {
+              ...event,
+              venueId: num(event.venueId),
+              performerId: event.performerId === "" ? null : num(event.performerId),
+              endTime: event.endTime === "" ? null : event.endTime,
+            };
+            if (editing.event) {
+              const { ticketCount: _drop, ...update } = payload;
+              save({ fn: api.updateEvent, args: [editing.event] }, update);
+            } else {
+              save({ fn: api.createEvent, args: [] }, { ...payload, ticketCount: Number(event.ticketCount) });
+            }
           }}
         >
           <input placeholder="name" value={event.name} onChange={(e) => setEvent({ ...event, name: e.target.value })} />
@@ -108,8 +203,10 @@ export default function AdminPage() {
           <input placeholder="startTime 2026-11-01T20:00:00" value={event.startTime} onChange={(e) => setEvent({ ...event, startTime: e.target.value })} />
           <input placeholder="endTime (optional)" value={event.endTime} onChange={(e) => setEvent({ ...event, endTime: e.target.value })} />
           <input placeholder="basePrice" value={event.basePrice} onChange={(e) => setEvent({ ...event, basePrice: e.target.value })} />
-          <input placeholder="ticketCount" value={event.ticketCount} onChange={(e) => setEvent({ ...event, ticketCount: e.target.value })} />
-          <button type="submit">Create event</button>
+          {!editing.event && (
+            <input placeholder="ticketCount" value={event.ticketCount} onChange={(e) => setEvent({ ...event, ticketCount: e.target.value })} />
+          )}
+          <button type="submit">{editing.event ? `Save event #${editing.event}` : "Create event"}</button>
         </form>
       </Section>
       <Section title="Create scheduled run (daily shows)">
@@ -121,21 +218,21 @@ export default function AdminPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            submit(api.createSchedule, run, (v) => ({
-              name: v.name,
-              description: v.description,
-              type: v.type,
-              venueId: num(v.venueId),
-              performerId: v.performerId === "" ? null : num(v.performerId),
-              basePrice: v.basePrice,
-              ticketCount: Number(v.ticketCount),
+            save({ fn: api.createSchedule, args: [] }, {
+              name: run.name,
+              description: run.description,
+              type: run.type,
+              venueId: num(run.venueId),
+              performerId: run.performerId === "" ? null : num(run.performerId),
+              basePrice: run.basePrice,
+              ticketCount: Number(run.ticketCount),
               schedule: {
-                startDate: v.startDate,
-                endDate: v.endDate,
-                showTimes: v.showTimes.split(",").map((s) => s.trim()).filter(Boolean),
-                durationMinutes: Number(v.durationMinutes),
+                startDate: run.startDate,
+                endDate: run.endDate,
+                showTimes: run.showTimes.split(",").map((s) => s.trim()).filter(Boolean),
+                durationMinutes: Number(run.durationMinutes),
               },
-            }));
+            });
           }}
         >
           <input placeholder="name" value={run.name} onChange={(e) => setRun({ ...run, name: e.target.value })} />
@@ -147,7 +244,7 @@ export default function AdminPage() {
           <input placeholder="ticketCount per show" value={run.ticketCount} onChange={(e) => setRun({ ...run, ticketCount: e.target.value })} />
           <input placeholder="startDate 2026-11-03" value={run.startDate} onChange={(e) => setRun({ ...run, startDate: e.target.value })} />
           <input placeholder="endDate 2026-11-09" value={run.endDate} onChange={(e) => setRun({ ...run, endDate: e.target.value })} />
-          <input placeholder="showTimes, e.g. 08:00, 09:30" value={run.showTimes} onChange={(e) => setRun({ ...run, showTimes: e.target.value })} />
+          <input placeholder="showTimes, e.g. 08:00, 10:00" value={run.showTimes} onChange={(e) => setRun({ ...run, showTimes: e.target.value })} />
           <input placeholder="durationMinutes, e.g. 90" value={run.durationMinutes} onChange={(e) => setRun({ ...run, durationMinutes: e.target.value })} />
           <button type="submit">Create scheduled run</button>
         </form>
