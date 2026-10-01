@@ -43,6 +43,11 @@ public class EventService {
             event.getPerformer().getName(),
             event.getPerformer().getType());
 
+        ScreenDto screen = event.getScreen() == null ? null : new ScreenDto(
+            event.getScreen().getId(), event.getVenue().getId(), event.getVenue().getName(),
+            event.getScreen().getName(),
+            event.getScreen().getCapacity());
+
         List<TicketDto> ticketDtos = tickets.findByEventId(eventId).stream()
             .map(t -> new TicketDto(t.getId(), t.getSeatNumber(), t.getPrice(), t.getStatus()))
             .toList();
@@ -50,7 +55,7 @@ public class EventService {
         return new EventDetailsResponse(
             event.getId(), event.getName(), event.getDescription(), event.getType(),
             event.getStartTime(), event.getEndTime(), event.getBasePrice(),
-            venue, performer, ticketDtos);
+            venue, performer, screen, ticketDtos);
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +81,7 @@ public class EventService {
             e.getId(), e.getName(), e.getDescription(), e.getType(),
             e.getStartTime(), e.getEndTime(), e.getBasePrice(),
             e.getVenue() != null ? e.getVenue().getName() : null,
-            e.getPerformer() != null ? e.getPerformer().getName() : null));
+            e.getPerformer() != null ? e.getPerformer().getName() : null,
+            e.getScreen() != null ? e.getScreen().getName() : null));
     }
 }

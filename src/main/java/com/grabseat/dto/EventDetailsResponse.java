@@ -15,6 +15,7 @@ public record EventDetailsResponse(
     BigDecimal basePrice,
     VenueDto venue,
     PerformerDto performer,
+    ScreenDto screen,
     List<TicketDto> tickets
 ) {
 }

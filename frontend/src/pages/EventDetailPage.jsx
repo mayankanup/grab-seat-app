@@ -71,6 +71,7 @@ export default function EventDetailPage() {
       <p className="muted">
         {new Date(event.startTime).toLocaleString()} · {event.venue?.name} (
         {event.venue?.location}) · {event.performer?.name}
+        {event.screen && <> · {event.screen.name}</>}
       </p>
       <p>{event.description}</p>
       <h3>Select seats</h3>

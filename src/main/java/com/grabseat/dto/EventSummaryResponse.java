@@ -13,6 +13,7 @@ public record EventSummaryResponse(
     LocalDateTime endTime,
     BigDecimal basePrice,
     String venueName,
-    String performerName
+    String performerName,
+    String screenName
 ) {
 }

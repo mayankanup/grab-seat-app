@@ -79,6 +79,24 @@ class AdminControllerTest {
 
     @Test
     @WithMockUser(username = "1", roles = "ADMIN")
+    void adminCanCreateScreen() throws Exception {
+        mvc.perform(post("/api/admin/screens")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"venueId\":3,\"name\":\"IMAX\",\"capacity\":80}"))
+            .andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = "7", roles = "USER")
+    void userCannotCreateScreen() throws Exception {
+        mvc.perform(post("/api/admin/screens")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"venueId\":3,\"name\":\"IMAX\",\"capacity\":80}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
     void adminCanCreateSchedule() throws Exception {
         when(adminService.createScheduledEvents(any())).thenReturn(List.of());
 

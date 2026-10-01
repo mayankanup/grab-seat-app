@@ -24,6 +24,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PerformerRepository performers;
     private final EventRepository events;
     private final TicketRepository tickets;
+    private final ScreenRepository screens;
     private final UserAccountRepository users;
     private final PasswordEncoder passwordEncoder;
     private final String adminLogin;
@@ -31,13 +32,15 @@ public class DataSeeder implements CommandLineRunner {
 
     public DataSeeder(VenueRepository venues, PerformerRepository performers,
                       EventRepository events, TicketRepository tickets,
-                      UserAccountRepository users, PasswordEncoder passwordEncoder,
+                      ScreenRepository screens, UserAccountRepository users,
+                      PasswordEncoder passwordEncoder,
                       @Value("${app.admin.login:admin}") String adminLogin,
                       @Value("${app.admin.password:admin123}") String adminPassword) {
         this.venues = venues;
         this.performers = performers;
         this.events = events;
         this.tickets = tickets;
+        this.screens = screens;
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.adminLogin = adminLogin;
@@ -48,10 +51,21 @@ public class DataSeeder implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         ensureAdmin();
-        if (events.count() > 0) {
-            return;
+        if (events.count() == 0) {
+            seedEvents();
         }
+        ensureScreens();
+    }
 
+    private void ensureScreens() {
+        for (Venue venue : venues.findAll()) {
+            if (screens.findByVenueIdOrderById(venue.getId()).isEmpty()) {
+                screens.save(new Screen(venue, "Screen 1", venue.getCapacity()));
+            }
+        }
+    }
+
+    private void seedEvents() {
         Venue cinema = venues.save(new Venue("PVR Downtown Cinema", "Downtown Mall, Screen 4", 120));
         Venue comedyHall = venues.save(new Venue("Laugh Factory Hall", "MG Road, Auditorium B", 200));
 

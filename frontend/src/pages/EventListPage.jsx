@@ -54,6 +54,7 @@ export default function EventListPage() {
             <h3>{ev.name}</h3>
             <p className="muted">
               {fmt(ev.startTime)} · {ev.venueName}
+              {ev.screenName && <> · {ev.screenName}</>}
             </p>
             <p>
               {ev.performerName} · ₹{ev.basePrice}

@@ -33,6 +33,12 @@ public class AdminController {
         return adminService.createPerformer(req.name(), req.type());
     }
 
+    @PostMapping("/screens")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ScreenDto createScreen(@Valid @RequestBody CreateScreenRequest req) {
+        return adminService.createScreen(req.venueId(), req.name(), req.capacity());
+    }
+
     @PostMapping("/events")
     @ResponseStatus(HttpStatus.CREATED)
     public EventDetailsResponse createEvent(@Valid @RequestBody CreateEventRequest req) {
@@ -56,6 +62,12 @@ public class AdminController {
         return adminService.listPerformers();
     }
 
+    @GetMapping("/screens")
+    public List<ScreenDto> listScreens(
+            @RequestParam(required = false) Long venueId) {
+        return adminService.listScreens(venueId);
+    }
+
     @GetMapping("/events")
     public Page<EventSummaryResponse> listEvents(
             @RequestParam(defaultValue = "0") int page,
@@ -73,6 +85,12 @@ public class AdminController {
     public PerformerDto updatePerformer(@PathVariable Long id,
                                         @Valid @RequestBody CreatePerformerRequest req) {
         return adminService.updatePerformer(id, req.name(), req.type());
+    }
+
+    @PutMapping("/screens/{id}")
+    public ScreenDto updateScreen(@PathVariable Long id,
+                                  @Valid @RequestBody CreateScreenRequest req) {
+        return adminService.updateScreen(id, req.name(), req.capacity());
     }
 
     @PutMapping("/events/{id}")

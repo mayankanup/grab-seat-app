@@ -21,8 +21,9 @@ public record CreateScheduledEventsRequest(
     @NotNull EventType type,
     @NotNull Long venueId,
     Long performerId,
+    Long screenId,
     @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal basePrice,
-    @NotNull @Min(1) @Max(1000) Integer ticketCount,
+    @Min(1) @Max(1000) Integer ticketCount,
     @NotNull @Valid Schedule schedule
 ) {
     public record Schedule(

@@ -29,6 +29,10 @@ public class Event {
     @JoinColumn(name = "performer_id")
     private Performer performer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "screen_id")
+    private Screen screen;
+
     @Column(nullable = false)
     private LocalDateTime startTime;
 
@@ -52,6 +56,13 @@ public class Event {
     public Event(String name, String description, EventType type, Venue venue,
                  Performer performer, LocalDateTime startTime, LocalDateTime endTime,
                  BigDecimal basePrice, String seriesId) {
+        this(name, description, type, venue, performer, startTime, endTime, basePrice,
+            seriesId, null);
+    }
+
+    public Event(String name, String description, EventType type, Venue venue,
+                 Performer performer, LocalDateTime startTime, LocalDateTime endTime,
+                 BigDecimal basePrice, String seriesId, Screen screen) {
         this.name = name;
         this.description = description;
         this.type = type;
@@ -61,6 +72,7 @@ public class Event {
         this.endTime = endTime;
         this.basePrice = basePrice;
         this.seriesId = seriesId;
+        this.screen = screen;
     }
 
     public Long getId() { return id; }
@@ -73,10 +85,18 @@ public class Event {
     public LocalDateTime getEndTime() { return endTime; }
     public BigDecimal getBasePrice() { return basePrice; }
     public String getSeriesId() { return seriesId; }
+    public Screen getScreen() { return screen; }
 
     public void update(String name, String description, EventType type, Venue venue,
                        Performer performer, LocalDateTime startTime, LocalDateTime endTime,
                        BigDecimal basePrice) {
+        update(name, description, type, venue, performer, startTime, endTime, basePrice,
+            this.screen);
+    }
+
+    public void update(String name, String description, EventType type, Venue venue,
+                       Performer performer, LocalDateTime startTime, LocalDateTime endTime,
+                       BigDecimal basePrice, Screen screen) {
         this.name = name;
         this.description = description;
         this.type = type;
@@ -85,5 +105,6 @@ public class Event {
         this.startTime = startTime;
         this.endTime = endTime;
         this.basePrice = basePrice;
+        this.screen = screen;
     }
 }

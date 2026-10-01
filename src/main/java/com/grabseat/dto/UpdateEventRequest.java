@@ -15,6 +15,7 @@ public record UpdateEventRequest(
     @NotNull EventType type,
     @NotNull Long venueId,
     Long performerId,
+    Long screenId,
     @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
     @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal basePrice

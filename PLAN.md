@@ -25,6 +25,7 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | TEST | Unit + integration (Testcontainers) + e2e per story | Tech 4 | In Progress | CI `.github/workflows/ci.yml` runs `mvn -B test` on push/PR with Postgres 16 service; verified locally 3/3 pass incl. `contextLoads`; pending: Testcontainers, e2e |
 | UI | React SPA: login, event list, event detail, booking, payment | Tech 5 | In Progress | `frontend/` (Vite + Router); public browse, JWT login-gated reserve→pay→confirm with token reuse; `web` compose service + nginx proxy; CORS for Vite dev |
 | AUTH-1 | User registration + password login (persisted) | New request | In Progress | `users` table (id internal; login unique; fullName; email unique for booking mail); `POST /auth/register` 201 + `POST /auth/login` 401; JWT sub=id plus userId/login claims; bookings keyed by internal id; SPA register page |
+| SCREENS | Multiplex screens: CRUD, show assignment, per-screen clash | New request | Done | `screens` table, `Event.screen`, `POST|GET|PUT /api/admin/screens`, screen-aware scheduling (capacity default, venue check, real-DB clash spec); seeded Screen 1; SPA pickers + screen display; 64/64 pass; live-verified in Docker |
 
 ## Plan of action (in order)
 
@@ -45,4 +46,4 @@ Status legend: `Done` | `In Progress` | `Not Started`
 
 ## Next action
 
-US6 done — next Elasticsearch-powered search.
+Screens done — next Elasticsearch-powered search (US6 merge first, then rebase).

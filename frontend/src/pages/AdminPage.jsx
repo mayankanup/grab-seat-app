@@ -38,6 +38,7 @@ const emptyEvent = {
   type: "COMEDY",
   venueId: "",
   performerId: "",
+  screenId: "",
   startTime: "",
   endTime: "",
   basePrice: "",
@@ -88,11 +89,13 @@ export default function AdminPage() {
   const [venues, setVenues] = useState([]);
   const [performers, setPerformers] = useState([]);
   const [shows, setShows] = useState([]);
+  const [screens, setScreens] = useState([]);
+  const [screen, setScreen] = useState({ venueId: "", name: "", capacity: 50 });
   const [venue, setVenue] = useState(emptyVenue);
   const [performer, setPerformer] = useState(emptyPerformer);
   const [event, setEvent] = useState(emptyEvent);
   const [run, setRun] = useState(emptyRun);
-  const [editing, setEditing] = useState({ venue: null, performer: null, event: null });
+  const [editing, setEditing] = useState({ venue: null, performer: null, event: null, screen: null });
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
 
@@ -100,14 +103,16 @@ export default function AdminPage() {
 
   async function refresh() {
     try {
-      const [v, p, e] = await Promise.all([
+      const [v, p, e, s] = await Promise.all([
         api.listVenues(),
         api.listPerformers(),
         api.listEvents(0, 50),
+        api.listScreens(),
       ]);
       setVenues(v);
       setPerformers(p);
       setShows(e.content ?? []);
+      setScreens(s);
     } catch (err) {
       setError(err.message);
     }
@@ -123,10 +128,11 @@ export default function AdminPage() {
     try {
       await work();
       setResult(message);
-      setEditing({ venue: null, performer: null, event: null });
+      setEditing({ venue: null, performer: null, event: null, screen: null });
       setVenue(emptyVenue);
       setPerformer(emptyPerformer);
       setEvent(emptyEvent);
+      setScreen({ venueId: "", name: "", capacity: 50 });
       await refresh();
     } catch (err) {
       setError(err.message);
@@ -134,26 +140,32 @@ export default function AdminPage() {
   }
 
   function editVenue(v) {
-    setEditing({ venue: v.id, performer: null, event: null });
+    setEditing({ venue: v.id, performer: null, event: null, screen: null });
     setVenue({ name: v.name, location: v.location, capacity: v.capacity });
   }
 
   function editPerformer(p) {
-    setEditing({ venue: null, performer: p.id, event: null });
+    setEditing({ venue: null, performer: p.id, event: null, screen: null });
     setPerformer({ name: p.name, type: p.type });
+  }
+
+  function editScreen(s) {
+    setEditing({ venue: null, performer: null, event: null, screen: s.id });
+    setScreen({ venueId: String(s.venueId), name: s.name, capacity: s.capacity });
   }
 
   async function editEvent(id) {
     setError("");
     try {
       const full = await api.getEvent(id);
-      setEditing({ venue: null, performer: null, event: id });
+      setEditing({ venue: null, performer: null, event: id, screen: null });
       setEvent({
         name: full.name,
         description: full.description ?? "",
         type: full.type,
         venueId: String(full.venue?.id ?? ""),
         performerId: full.performer?.id ? String(full.performer.id) : "",
+        screenId: full.screen?.id ? String(full.screen.id) : "",
         startTime: full.startTime?.slice(0, 16) ?? "",
         endTime: full.endTime?.slice(0, 16) ?? "",
         basePrice: full.basePrice,
@@ -165,10 +177,11 @@ export default function AdminPage() {
   }
 
   function cancelEdit() {
-    setEditing({ venue: null, performer: null, event: null });
+    setEditing({ venue: null, performer: null, event: null, screen: null });
     setVenue(emptyVenue);
     setPerformer(emptyPerformer);
     setEvent(emptyEvent);
+    setScreen({ venueId: "", name: "", capacity: 50 });
   }
 
   const days = dayCount(run.startDate, run.endDate);
@@ -252,11 +265,60 @@ export default function AdminPage() {
           </div>
         </form>
       </Section>
+      <Section title="Screens">
+        <ul>
+          {screens.map((s) => (
+            <li key={s.id}>
+              #{s.id} {s.name} · {s.venueName} · cap {s.capacity}{" "}
+              <button onClick={() => editScreen(s)}>Edit</button>
+            </li>
+          ))}
+        </ul>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const payload = {
+              venueId: num(screen.venueId),
+              name: screen.name,
+              capacity: Number(screen.capacity),
+            };
+            if (editing.screen) {
+              saved(`Screen #${editing.screen} saved.`, () =>
+                api.updateScreen(editing.screen, payload)
+              );
+            } else {
+              saved("Screen created.", () => api.createScreen(payload));
+            }
+          }}
+        >
+          <Field label={editing.screen ? `Name (editing #${editing.screen})` : "Name"} hint="e.g. IMAX, Screen 4">
+            <input required value={screen.name} onChange={(e) => setScreen({ ...screen, name: e.target.value })} />
+          </Field>
+          <Field label="Venue">
+            <select required value={screen.venueId} onChange={(e) => setScreen({ ...screen, venueId: e.target.value })}>
+              <option value="">— choose venue —</option>
+              {venues.map((v) => (
+                <option key={v.id} value={v.id}>#{v.id} {v.name}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Capacity" hint="seats in this screen">
+            <input required type="number" min="1" max="100000" value={screen.capacity} onChange={(e) => setScreen({ ...screen, capacity: e.target.value })} />
+          </Field>
+          <div className="row">
+            <button type="submit">{editing.screen ? "Save screen" : "Create screen"}</button>
+            {editing.screen && (
+              <button type="button" onClick={cancelEdit}>Cancel</button>
+            )}
+          </div>
+        </form>
+      </Section>
       <Section title="Events (first 50)">
         <ul>
           {shows.map((s) => (
             <li key={s.id}>
-              #{s.id} {s.name} · {s.venueName}{" "}
+              #{s.id} {s.name} · {s.venueName}
+              {s.screenName && <> · {s.screenName}</>}{" "}
               <button onClick={() => editEvent(s.id)}>Edit</button>
             </li>
           ))}
@@ -268,6 +330,7 @@ export default function AdminPage() {
               ...event,
               venueId: num(event.venueId),
               performerId: event.performerId === "" ? null : num(event.performerId),
+              screenId: event.screenId === "" ? null : num(event.screenId),
               endTime: event.endTime === "" ? null : event.endTime,
             };
             if (editing.event) {
@@ -309,6 +372,16 @@ export default function AdminPage() {
               {performers.map((p) => (
                 <option key={p.id} value={p.id}>#{p.id} {p.name}</option>
               ))}
+            </select>
+          </Field>
+          <Field label="Screen" hint="optional; shows in this hall">
+            <select value={event.screenId} onChange={(e) => setEvent({ ...event, screenId: e.target.value })}>
+              <option value="">— none —</option>
+              {screens
+                .filter((s) => event.venueId === "" || String(s.venueId) === String(event.venueId))
+                .map((s) => (
+                  <option key={s.id} value={s.id}>{s.name} (cap {s.capacity})</option>
+                ))}
             </select>
           </Field>
           <Field label="Starts">
@@ -353,6 +426,7 @@ export default function AdminPage() {
                   type: run.type,
                   venueId: num(run.venueId),
                   performerId: run.performerId === "" ? null : num(run.performerId),
+                  screenId: run.screenId === "" ? null : num(run.screenId),
                   basePrice: run.basePrice,
                   ticketCount: Number(run.ticketCount),
                   schedule: {
@@ -393,6 +467,16 @@ export default function AdminPage() {
               {performers.map((p) => (
                 <option key={p.id} value={p.id}>#{p.id} {p.name}</option>
               ))}
+            </select>
+          </Field>
+          <Field label="Screen" hint="optional; clash-checked per screen">
+            <select value={run.screenId} onChange={(e) => setRun({ ...run, screenId: e.target.value })}>
+              <option value="">— none —</option>
+              {screens
+                .filter((s) => run.venueId === "" || String(s.venueId) === String(run.venueId))
+                .map((s) => (
+                  <option key={s.id} value={s.id}>{s.name} (cap {s.capacity})</option>
+                ))}
             </select>
           </Field>
           <Field label="Base price (₹)">
