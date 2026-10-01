@@ -13,15 +13,15 @@ Status legend: `Done` | `In Progress` | `Not Started`
 | ID | User story / task | Maps to requirements | Status | Evidence / notes |
 |----|-------------------|----------------------|--------|------------------|
 | S0 | Project scaffold: Spring Boot, JPA, Postgres, `docker-compose.yml`, `GET /api/health` | Tech guidelines 2,3 | Done | `pom.xml`, `docker-compose.yml`, `HealthController.java`; verified `mvn -q compile -DskipTests` OK |
-| US0 | Seed DB with movies + comedy shows | New request (demo data for 1-4) | Done | Committed `54530bc` on `feature/US0-seed-movies-comedy`; compiles OK; DB live-run pending (Docker offline) |
-| US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | Done | `controller/EventController`, `service/EventService`, `dto/*`, `exception/*`; `EventServiceTest` + `EventControllerTest` 2/2 pass; 404 via `ResourceNotFoundException` |
+| US0 | Seed DB with movies + comedy shows | New request (demo data for 1-4) | Done | Merged PR #1; live-verified in Docker: `GET /events/1` = Dune show, 40 tickets |
+| US1 | View event: `GET /events/:eventId -> Event & Venue & Performer & Ticket[]` | Core 1; API 1 | Done | Merged PR #2; `EventServiceTest` + `EventControllerTest` 2/2 pass; live-verified in Docker |
 | US2 | Search events: `GET /events/search?keyword,start,end,pageSize,page` | Core 2; API 2 | Not Started | Start DB-only; ES + CDC/Kafka later. Note spec mismatch: diagram uses `term,location,type,date` — to confirm |
 | US3 | Reserve ticket: `reserve(ticketId,userId)` → `POST /bookings/reserve` | Core 3; API 3 | Not Started | Needs Redis ticket-lock `{ticketId:userId} TTL 10min` + virtual waiting queue |
 | US4 | Confirm payment: `confirm(ticketId,userId,paymentDetails)` → `POST /bookings/confirm` | Core 3; API 4 | Not Started | Stripe mock; mark `BOOKED`, create `Booking` |
 | US5 | View my bookings: `GET /users/:userId/bookings` | Core 4 | Not Started | Needs `Booking(id,userId,tickets)` entity |
 | US6 | Admin add events: `POST /events`, `POST /venues`, `POST /performers` | Core 5 | Not Started | Role check (admin/coordinator) at Gateway |
 | US7 | Dynamic pricing for popular events | Core 6 | Not Started | Rule TBD (e.g. sold% >80% → surge multiplier); apply on view/reserve |
-| INFRA-1 | Postgres + Redis + Elasticsearch + Kafka/Debezium in Docker Desktop | Tech 2,3; FinalArchitecture | Not Started | Only Postgres in compose today |
+| INFRA-1 | Postgres + Redis + Elasticsearch + Kafka/Debezium in Docker Desktop | Tech 2,3; FinalArchitecture | In Progress | Docker: `Dockerfile` (multi-stage Maven+JRE21) + compose `app` + `postgres` healthy; verified `/api/health` UP + `/events/1` 40 tickets; pending: Redis, ES, Kafka |
 | TEST | Unit + integration (Testcontainers) + e2e per story | Tech 4 | Not Started | `GrabSeatApplicationTests.contextLoads` only; fails without DB |
 | UI | Web UI for user (view/search/book/my) + admin (add) | Tech 5 | Not Started | Propose Thymeleaf first |
 
@@ -43,4 +43,4 @@ Status legend: `Done` | `In Progress` | `Not Started`
 
 ## Next action
 
-US1 done — start US2 DB-backed search (`GET /events/search`), then US3/US4 reserve+confirm.
+Docker deploy done — start US2 DB-backed search (`GET /events/search`), then US3/US4 reserve+confirm.
