@@ -18,7 +18,7 @@ function RequireAuth({ children }) {
 }
 
 function Header() {
-  const { userId, authenticated, logout } = useAuth();
+  const { displayName, authenticated, logout } = useAuth();
   return (
     <header className="bar">
       <Link to="/" className="brand">
@@ -27,7 +27,7 @@ function Header() {
       <span>
         {authenticated ? (
           <>
-            {userId} <button onClick={logout}>Logout</button>
+            {displayName} <button onClick={logout}>Logout</button>
           </>
         ) : (
           <Link to="/login">Login</Link>

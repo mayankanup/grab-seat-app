@@ -25,10 +25,13 @@ async function request(path, { method = "GET", body, auth = false } = {}) {
 }
 
 export const api = {
-  login: (userId, password) =>
-    request("/auth/login", { method: "POST", body: { userId, password } }),
-  register: (userId, password) =>
-    request("/auth/register", { method: "POST", body: { userId, password } }),
+  login: (login, password) =>
+    request("/auth/login", { method: "POST", body: { login, password } }),
+  register: (login, password, fullName, email) =>
+    request("/auth/register", {
+      method: "POST",
+      body: { login, password, fullName, email },
+    }),
   searchEvents: (keyword = "", page = 0, pageSize = 20) => {
     const q = new URLSearchParams({ page, pageSize });
     if (keyword) q.set("keyword", keyword);

@@ -1,5 +1,6 @@
 package com.grabseat.controller;
 
+import com.grabseat.dto.BookedTicketDto;
 import com.grabseat.dto.ConfirmBookingResponse;
 import com.grabseat.dto.ReserveTicketsResponse;
 import com.grabseat.exception.TicketNotAvailableException;
@@ -37,17 +38,17 @@ class BookingControllerTest {
     JwtService jwtService;
 
     private ReserveTicketsResponse reserveResponse() {
-        return new ReserveTicketsResponse(1L, "RESERVED", "user-1", List.of(
-            new ReserveTicketsResponse.BookedTicketDto(10L, 5L, "A-1",
+        return new ReserveTicketsResponse(1L, "RESERVED", 7L, List.of(
+            new BookedTicketDto(10L, 5L, "A-1",
                 new BigDecimal("349.00"), "RESERVED"),
-            new ReserveTicketsResponse.BookedTicketDto(11L, 5L, "A-2",
+            new BookedTicketDto(11L, 5L, "A-2",
                 new BigDecimal("349.00"), "RESERVED")));
     }
 
     @Test
     void reserveReturns201WithTickets() throws Exception {
-        when(jwtService.parseUserId("test-token")).thenReturn("user-1");
-        when(bookingService.reserve(eq(List.of(10L, 11L)), eq("user-1")))
+        when(jwtService.parseUserId("test-token")).thenReturn(7L);
+        when(bookingService.reserve(eq(List.of(10L, 11L)), eq(7L)))
             .thenReturn(reserveResponse());
 
         mvc.perform(post("/bookings/reserve")
@@ -62,7 +63,7 @@ class BookingControllerTest {
 
     @Test
     void reserveConflictReturns409() throws Exception {
-        when(jwtService.parseUserId("test-token")).thenReturn("user-2");
+        when(jwtService.parseUserId("test-token")).thenReturn(9L);
         when(bookingService.reserve(eq(List.of(10L)), any()))
             .thenThrow(new TicketNotAvailableException("Ticket 10 is not available"));
 
@@ -85,10 +86,10 @@ class BookingControllerTest {
 
     @Test
     void confirmReturns200() throws Exception {
-        when(jwtService.parseUserId("test-token")).thenReturn("user-1");
-        when(bookingService.confirm(eq(1L), eq("user-1"), any())).thenReturn(
-            new ConfirmBookingResponse(1L, "CONFIRMED", "user-1", "ch_test", List.of(
-                new ConfirmBookingResponse.BookedTicketDto(10L, 5L, "A-1",
+        when(jwtService.parseUserId("test-token")).thenReturn(7L);
+        when(bookingService.confirm(eq(1L), eq(7L), any())).thenReturn(
+            new ConfirmBookingResponse(1L, "CONFIRMED", 7L, "ch_test", List.of(
+                new BookedTicketDto(10L, 5L, "A-1",
                     new BigDecimal("349.00"), "BOOKED"))));
 
         mvc.perform(post("/bookings/confirm")

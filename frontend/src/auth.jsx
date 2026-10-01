@@ -3,42 +3,69 @@ import { api, isTokenValid, tokenPayload } from "./api";
 
 const AuthContext = createContext(null);
 
+function storedProfile() {
+  try {
+    return JSON.parse(localStorage.getItem("grabseat_user") ?? "null");
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
   const [userId, setUserId] = useState(() => {
     if (!isTokenValid()) {
       localStorage.removeItem("grabseat_token");
+      localStorage.removeItem("grabseat_user");
       return null;
     }
-    const payload = tokenPayload();
-    return payload.userId ?? payload.sub;
+    const sub = tokenPayload().sub;
+    const id = Number(sub);
+    return Number.isNaN(id) ? null : id;
   });
+  const [profile, setProfile] = useState(() =>
+    isTokenValid() ? storedProfile() : null
+  );
 
-  const login = useCallback(async (id, password) => {
-    const res = await api.login(id, password);
+  const saveSession = useCallback((res) => {
     localStorage.setItem("grabseat_token", res.token);
-    setUserId(res.userId);
+    const user = { userId: res.userId, login: res.login, fullName: res.fullName, email: res.email };
+    localStorage.setItem("grabseat_user", JSON.stringify(user));
+    setUserId(user.userId);
+    setProfile(user);
   }, []);
 
-  const register = useCallback(async (id, password) => {
-    const res = await api.register(id, password);
-    localStorage.setItem("grabseat_token", res.token);
-    setUserId(res.userId);
-  }, []);
+  const login = useCallback(
+    async (loginName, password) => {
+      saveSession(await api.login(loginName, password));
+    },
+    [saveSession]
+  );
+
+  const register = useCallback(
+    async (loginName, password, fullName, email) => {
+      saveSession(await api.register(loginName, password, fullName, email));
+    },
+    [saveSession]
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem("grabseat_token");
+    localStorage.removeItem("grabseat_user");
     setUserId(null);
+    setProfile(null);
   }, []);
 
   const value = useMemo(
     () => ({
       userId,
+      profile,
+      displayName: profile?.fullName || profile?.login || userId,
       authenticated: !!userId && isTokenValid(),
       login,
       register,
       logout,
     }),
-    [userId, login, register, logout]
+    [userId, profile, login, register, logout]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

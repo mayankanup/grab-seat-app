@@ -25,13 +25,18 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public TokenResponse register(@Valid @RequestBody RegisterRequest req) {
-        UserAccount user = userService.register(req.userId(), req.password());
-        return new TokenResponse(user.getUsername(), jwtService.issue(user.getUsername()));
+        UserAccount user =
+            userService.register(req.login(), req.password(), req.fullName(), req.email());
+        return tokenFor(user);
     }
 
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest req) {
-        UserAccount user = userService.authenticate(req.userId(), req.password());
-        return new TokenResponse(user.getUsername(), jwtService.issue(user.getUsername()));
+        return tokenFor(userService.authenticate(req.login(), req.password()));
+    }
+
+    private TokenResponse tokenFor(UserAccount user) {
+        return new TokenResponse(user.getId(), user.getLogin(), user.getFullName(),
+            user.getEmail(), jwtService.issue(user.getId(), user.getLogin()));
     }
 }

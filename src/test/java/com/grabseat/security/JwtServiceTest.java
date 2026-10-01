@@ -14,24 +14,25 @@ class JwtServiceTest {
 
     @Test
     void issuedTokenParsesBackToUserId() {
-        String token = service.issue("user-1");
+        String token = service.issue(7L, "anup");
 
-        assertThat(service.parseUserId(token)).isEqualTo("user-1");
+        assertThat(service.parseUserId(token)).isEqualTo(7L);
     }
 
     @Test
-    void issuedTokenCarriesExplicitUserIdClaim() {
-        String token = service.issue("user-1");
+    void issuedTokenCarriesUserIdAndLoginClaims() {
+        String token = service.issue(7L, "anup");
         String payload = new String(
             java.util.Base64.getUrlDecoder().decode(token.split("\\.")[1]),
             java.nio.charset.StandardCharsets.UTF_8);
 
-        assertThat(payload).contains("\"userId\":\"user-1\"");
+        assertThat(payload).contains("\"userId\":7");
+        assertThat(payload).contains("\"login\":\"anup\"");
     }
 
     @Test
     void tamperedTokenIsRejected() {
-        String token = service.issue("user-1");
+        String token = service.issue(7L, "anup");
 
         assertThatThrownBy(() -> service.parseUserId(token + "tampered"))
             .isInstanceOf(JwtException.class);
@@ -39,7 +40,7 @@ class JwtServiceTest {
 
     @Test
     void tokenFromAnotherSecretIsRejected() {
-        String token = service.issue("user-1");
+        String token = service.issue(7L, "anup");
         JwtService other = new JwtService("another-secret-for-tests-32bytes!!!", 3600000);
 
         assertThatThrownBy(() -> other.parseUserId(token))

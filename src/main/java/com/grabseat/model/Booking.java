@@ -13,7 +13,7 @@ public class Booking {
     private Long id;
 
     @Column(nullable = false)
-    private String userId;
+    private Long userId;
 
     @OneToMany(mappedBy = "booking")
     private List<Ticket> tickets = new ArrayList<>();
@@ -28,7 +28,7 @@ public class Booking {
     protected Booking() {
     }
 
-    public Booking(String userId, List<Ticket> tickets) {
+    public Booking(Long userId, List<Ticket> tickets) {
         this.userId = userId;
         this.status = BookingStatus.RESERVED;
         this.tickets = new ArrayList<>(tickets);
@@ -38,7 +38,7 @@ public class Booking {
     }
 
     public Long getId() { return id; }
-    public String getUserId() { return userId; }
+    public Long getUserId() { return userId; }
     public List<Ticket> getTickets() { return tickets; }
     public BookingStatus getStatus() { return status; }
     public LocalDateTime getCreatedAt() { return createdAt; }

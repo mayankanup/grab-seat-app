@@ -5,6 +5,8 @@ import { useAuth } from "../auth";
 export default function RegisterPage() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     try {
-      await register(id.trim(), password);
+      await register(id.trim(), password, fullName.trim(), email.trim());
       navigate("/", { replace: true });
     } catch (err) {
       setError(err.message);
@@ -24,13 +26,25 @@ export default function RegisterPage() {
     <div className="card narrow">
       <h2>Create account</h2>
       <p className="muted">
-        User id: 3–32 chars (letters, digits, . _ -). Password: min 8 chars.
+        Login: 3–32 chars (letters, digits, . _ -). Password: min 8 chars.
+        Booking confirmations go to your email.
       </p>
       <form onSubmit={submit}>
         <input
-          placeholder="user id, e.g. anup"
+          placeholder="login, e.g. anup"
           value={id}
           onChange={(e) => setId(e.target.value)}
+        />
+        <input
+          placeholder="full name, e.g. Anup Kumar"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+        />
+        <input
+          type="email"
+          placeholder="email, e.g. anup@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"

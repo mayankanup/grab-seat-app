@@ -24,7 +24,7 @@ public class Ticket {
     @Column(nullable = false)
     private TicketStatus status = TicketStatus.AVAILABLE;
 
-    private String userId;
+    private Long userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id")
@@ -48,14 +48,14 @@ public class Ticket {
     public String getSeatNumber() { return seatNumber; }
     public BigDecimal getPrice() { return price; }
     public TicketStatus getStatus() { return status; }
-    public String getUserId() { return userId; }
+    public Long getUserId() { return userId; }
     public Booking getBooking() { return booking; }
 
     void assignBooking(Booking booking) {
         this.booking = booking;
     }
 
-    public void reserve(String userId) {
+    public void reserve(Long userId) {
         if (status != TicketStatus.AVAILABLE) {
             throw new com.grabseat.exception.TicketNotAvailableException(
                 "Ticket " + id + " is not available (status=" + status + ")");
@@ -64,8 +64,9 @@ public class Ticket {
         this.userId = userId;
     }
 
-    public void confirm(String userId) {
-        if (status != TicketStatus.RESERVED || !userId.equals(this.userId)) {
+    public void confirm(Long userId) {
+        if (status != TicketStatus.RESERVED
+                || userId == null || !userId.equals(this.userId)) {
             throw new com.grabseat.exception.TicketNotAvailableException(
                 "Ticket " + id + " cannot be confirmed by user " + userId);
         }

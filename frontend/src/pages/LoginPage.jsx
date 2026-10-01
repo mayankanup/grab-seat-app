@@ -27,7 +27,7 @@ export default function LoginPage() {
       <h2>Login</h2>
       <form onSubmit={submit}>
         <input
-          placeholder="user id, e.g. anup"
+          placeholder="login, e.g. anup"
           value={id}
           onChange={(e) => setId(e.target.value)}
         />
