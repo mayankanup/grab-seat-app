@@ -32,6 +32,6 @@ public class BookingController {
     @PostMapping("/confirm")
     public ConfirmBookingResponse confirm(@Valid @RequestBody ConfirmBookingRequest req,
                                           Authentication auth) {
-        return bookingService.confirm(req.bookingId(), auth.getName(), req.paymentToken());
+        return bookingService.confirm(req.bookingId(), auth.getName(), req);
     }
 }

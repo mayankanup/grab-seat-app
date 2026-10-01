@@ -1,11 +1,13 @@
 package com.grabseat.service;
 
+import com.grabseat.dto.ConfirmBookingRequest;
 import com.grabseat.dto.ConfirmBookingResponse;
 import com.grabseat.dto.ReserveTicketsResponse;
 import com.grabseat.exception.PaymentFailedException;
 import com.grabseat.exception.ResourceNotFoundException;
 import com.grabseat.exception.TicketNotAvailableException;
 import com.grabseat.model.*;
+import com.grabseat.payment.DummyStripeService;
 import com.grabseat.repository.BookingRepository;
 import com.grabseat.repository.TicketRepository;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,9 +35,18 @@ class BookingServiceTest {
     TicketRepository tickets;
     @Mock
     BookingRepository bookings;
+    @Mock
+    DummyStripeService payments;
 
     @InjectMocks
     BookingService service;
+
+    private static final String GOOD_CARD = "4242424242424242";
+    private static final String BAD_CARD = "4000000000000002";
+
+    private ConfirmBookingRequest card(String number) {
+        return new ConfirmBookingRequest(1L, number, 12, 2030, "123");
+    }
 
     private Event event() {
         Venue venue = new Venue("PVR Downtown Cinema", "Downtown Mall", 120);
@@ -92,11 +104,14 @@ class BookingServiceTest {
         locked.forEach(t -> t.reserve("user-1"));
         Booking booking = new Booking("user-1", locked);
         when(bookings.findById(1L)).thenReturn(Optional.of(booking));
+        when(payments.charge(eq(GOOD_CARD), any())).thenReturn(
+            new DummyStripeService.ChargeResult("ch_test", "4242", new BigDecimal("698.00")));
 
-        ConfirmBookingResponse res = service.confirm(1L, "user-1", "tok_test_visa");
+        ConfirmBookingResponse res = service.confirm(1L, "user-1", card(GOOD_CARD));
 
         assertThat(res.tickets()).allMatch(t -> t.ticketStatus().equals("BOOKED"));
         assertThat(res.bookingStatus()).isEqualTo("CONFIRMED");
+        assertThat(res.paymentReference()).isEqualTo("ch_test");
     }
 
     @Test
@@ -106,7 +121,7 @@ class BookingServiceTest {
         when(bookings.findById(1L))
             .thenReturn(Optional.of(new Booking("user-1", locked)));
 
-        assertThatThrownBy(() -> service.confirm(1L, "user-2", "tok_test"))
+        assertThatThrownBy(() -> service.confirm(1L, "user-2", card(GOOD_CARD)))
             .isInstanceOf(TicketNotAvailableException.class);
     }
 
@@ -116,8 +131,10 @@ class BookingServiceTest {
         locked.forEach(t -> t.reserve("user-1"));
         when(bookings.findById(1L))
             .thenReturn(Optional.of(new Booking("user-1", locked)));
+        when(payments.charge(eq(BAD_CARD), any()))
+            .thenThrow(new PaymentFailedException("Card declined (dummy Stripe)"));
 
-        assertThatThrownBy(() -> service.confirm(1L, "user-1", "fail_card"))
+        assertThatThrownBy(() -> service.confirm(1L, "user-1", card(BAD_CARD)))
             .isInstanceOf(PaymentFailedException.class);
     }
 }
