@@ -30,6 +30,7 @@ public class EventCdcConsumer {
 
     @KafkaListener(topics = TOPIC, groupId = "grabseat-search-indexer")
     public void onMessage(String key, String value) {
+        log.info("Received CDC message (key={}): {}", key, value);
         try {
             handle(value);
         } catch (Exception e) {
@@ -46,12 +47,14 @@ public class EventCdcConsumer {
         if ("d".equals(op)) {
             long id = envelope.path("before").path("id").asLong(-1);
             if (id > 0) {
+                log.info("Deleting event id={} from search index", id);
                 indexer.deleteEvent(id);
             }
             return;
         }
         long id = envelope.path("after").path("id").asLong(-1);
         if (id > 0) {
+            log.info("Indexing event id={} in search index", id);
             indexer.indexEventById(id);
         }
     }

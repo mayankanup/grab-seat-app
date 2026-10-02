@@ -50,6 +50,22 @@ public class EventSearchDocument {
         this.screenName = screenName;
     }
 
+    public String toString() {
+        return "EventSearchDocument{" +
+                "id='" + id + '\'' +
+                ", eventId=" + eventId +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", type='" + type + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", basePrice=" + basePrice +
+                ", venueName='" + venueName + '\'' +
+                ", performerName='" + performerName + '\'' +
+                ", screenName='" + screenName + '\'' +
+                '}';
+    }
+
     public String getId() { return id; }
     public Long getEventId() { return eventId; }
     public String getName() { return name; }

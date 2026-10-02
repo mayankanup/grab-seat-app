@@ -40,8 +40,11 @@ public class SearchService {
 
     public Page<EventSummaryResponse> search(String keyword, LocalDateTime start,
                                             LocalDateTime end, int page, int pageSize) {
+        log.info("Searching events with keyword='{}', start={}, end={}, page={}, pageSize={}",
+                                                keyword, start, end, page, pageSize);
         try {
             if (!indexer.indexHasData()) {
+                log.info("Elasticsearch index is empty, using database fallback");
                 return eventService.search(keyword, start, end, page, pageSize);
             }
             return searchIndex(keyword, start, end, page, pageSize);
@@ -53,6 +56,8 @@ public class SearchService {
 
     private Page<EventSummaryResponse> searchIndex(String keyword, LocalDateTime start,
                                                    LocalDateTime end, int page, int pageSize) {
+        log.info("Searching events in Elasticsearch index with keyword='{}', start={}, end={}, page={}, pageSize={}",
+                keyword, start, end, page, pageSize);
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(pageSize, 1), 100);
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("startTime").ascending());
@@ -79,6 +84,7 @@ public class SearchService {
     }
 
     private EventSummaryResponse toSummary(EventSearchDocument d) {
+        log.info("Mapping EventSearchDocument to EventSummaryResponse: {}", d);
         return new EventSummaryResponse(
             d.getEventId(), d.getName(), d.getDescription(),
             d.getType() != null ? EventType.valueOf(d.getType()) : null,
