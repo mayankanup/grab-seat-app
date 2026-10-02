@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api";
 
 function fmt(date) {
@@ -7,11 +7,18 @@ function fmt(date) {
 }
 
 export default function EventListPage() {
-  const [keyword, setKeyword] = useState("");
-  const [query, setQuery] = useState("");
+  // The keyword lives in the URL so a reload, a back/forward step or a shared
+  // link keeps the search instead of silently falling back to "list everything".
+  const [params, setParams] = useSearchParams();
+  const query = params.get("keyword") ?? "";
+  const [keyword, setKeyword] = useState(query);
   const [events, setEvents] = useState([]);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setKeyword(query);
+  }, [query]);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,10 +42,12 @@ export default function EventListPage() {
         className="row"
         onSubmit={(e) => {
           e.preventDefault();
-          setQuery(keyword.trim());
+          const next = keyword.trim();
+          setParams(next ? { keyword: next } : {});
         }}
       >
         <input
+          name="keyword"
           placeholder="Search movies, comedy…"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
