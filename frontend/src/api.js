@@ -64,6 +64,8 @@ export const api = {
     request(`/api/admin/performers/${id}`, { method: "PUT", body: performer, auth: true }),
   updateEvent: (id, event) =>
     request(`/api/admin/events/${id}`, { method: "PUT", body: event, auth: true }),
+  deleteEvent: (id) =>
+    request(`/api/admin/events/${id}`, { method: "DELETE", auth: true }),
   listScreens: (venueId) =>
     request(venueId ? `/api/admin/screens?venueId=${venueId}` : "/api/admin/screens", {
       auth: true,

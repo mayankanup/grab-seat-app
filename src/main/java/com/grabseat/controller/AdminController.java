@@ -98,4 +98,10 @@ public class AdminController {
                                             @Valid @RequestBody UpdateEventRequest req) {
         return adminService.updateEvent(id, req);
     }
+
+    @DeleteMapping("/events/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteEvent(@PathVariable Long id) {
+        adminService.deleteEvent(id);
+    }
 }

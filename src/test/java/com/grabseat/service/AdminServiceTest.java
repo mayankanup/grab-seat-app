@@ -2,6 +2,7 @@ package com.grabseat.service;
 
 import com.grabseat.dto.CreateEventRequest;
 import com.grabseat.dto.CreateScheduledEventsRequest;
+import com.grabseat.exception.ConflictException;
 import com.grabseat.exception.ResourceNotFoundException;
 import com.grabseat.model.*;
 import com.grabseat.repository.*;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -227,5 +229,45 @@ class AdminServiceTest {
 
         assertThatThrownBy(() -> service.createEvent(req))
             .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void deleteEventRemovesSeatsThenEvent() {
+        Event event = new Event("Show", null, EventType.MOVIE, new Venue("Hall", "Town", 100),
+            null, LocalDateTime.now().plusDays(1), null, new BigDecimal("100.00"));
+        List<Ticket> seats = List.of(
+            new Ticket(event, "A-1", new BigDecimal("100.00"), TicketStatus.AVAILABLE),
+            new Ticket(event, "A-2", new BigDecimal("100.00"), TicketStatus.AVAILABLE));
+        when(events.findById(5L)).thenReturn(Optional.of(event));
+        when(tickets.findByEventId(5L)).thenReturn(seats);
+
+        service.deleteEvent(5L);
+
+        verify(tickets).deleteAll(seats);
+        verify(events).delete(event);
+    }
+
+    @Test
+    void deleteEventRefusedWhenSeatsAreTaken() {
+        Event event = new Event("Show", null, EventType.MOVIE, new Venue("Hall", "Town", 100),
+            null, LocalDateTime.now().plusDays(1), null, new BigDecimal("100.00"));
+        Ticket booked = new Ticket(event, "A-1", new BigDecimal("100.00"), TicketStatus.BOOKED);
+        when(events.findById(5L)).thenReturn(Optional.of(event));
+        when(tickets.findByEventId(5L)).thenReturn(List.of(booked));
+
+        assertThatThrownBy(() -> service.deleteEvent(5L))
+            .isInstanceOf(ConflictException.class)
+            .hasMessageContaining("1 seat(s)");
+
+        verify(events, never()).delete(any(Event.class));
+    }
+
+    @Test
+    void deleteEventFailsWhenEventMissing() {
+        when(events.findById(5L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.deleteEvent(5L))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessageContaining("Event");
     }
 }

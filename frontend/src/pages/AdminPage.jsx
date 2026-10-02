@@ -176,6 +176,19 @@ export default function AdminPage() {
     }
   }
 
+  async function deleteEvent(show) {
+    if (
+      !window.confirm(
+        `Delete "${show.name}"? This removes the show and its seats and cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    // The backend refuses with 409 while any seat is reserved or booked;
+    // saved() surfaces that message and clears any in-progress edit on success.
+    await saved(`Event #${show.id} deleted.`, () => api.deleteEvent(show.id));
+  }
+
   function cancelEdit() {
     setEditing({ venue: null, performer: null, event: null, screen: null });
     setVenue(emptyVenue);
@@ -319,7 +332,10 @@ export default function AdminPage() {
             <li key={s.id}>
               #{s.id} {s.name} · {s.venueName}
               {s.screenName && <> · {s.screenName}</>}{" "}
-              <button onClick={() => editEvent(s.id)}>Edit</button>
+              <button onClick={() => editEvent(s.id)}>Edit</button>{" "}
+              <button className="danger" onClick={() => deleteEvent(s)}>
+                Delete
+              </button>
             </li>
           ))}
         </ul>
