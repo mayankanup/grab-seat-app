@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, isTokenValid } from "../api";
+import { useAuth } from "../auth";
 
 export default function EventDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === "ADMIN";
   const [event, setEvent] = useState(null);
   const [selected, setSelected] = useState([]);
   const [error, setError] = useState("");
   const [reserving, setReserving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     api
@@ -57,6 +62,27 @@ export default function EventDetailPage() {
     }
   }
 
+  async function remove() {
+    setDeleteError("");
+    if (
+      !window.confirm(
+        `Delete "${event.name}"? This removes the show and its seats and cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.deleteEvent(id);
+      navigate("/", { replace: true });
+    } catch (err) {
+      // The backend refuses with 409 while any seat is reserved or booked.
+      setDeleteError(err.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   if (error && !event) return <p className="error">{error}</p>;
   if (!event) return <p className="muted">Loading…</p>;
 
@@ -66,8 +92,18 @@ export default function EventDetailPage() {
 
   return (
     <div>
-      <span className="badge">{event.type}</span>
-      <h2>{event.name}</h2>
+      <div className="row">
+        <div>
+          <span className="badge">{event.type}</span>
+          <h2>{event.name}</h2>
+        </div>
+        {isAdmin && (
+          <button className="danger" disabled={deleting} onClick={remove}>
+            {deleting ? "Deleting…" : "Delete event"}
+          </button>
+        )}
+      </div>
+      {deleteError && <p className="error">{deleteError}</p>}
       <p className="muted">
         {new Date(event.startTime).toLocaleString()} · {event.venue?.name} (
         {event.venue?.location}) · {event.performer?.name}

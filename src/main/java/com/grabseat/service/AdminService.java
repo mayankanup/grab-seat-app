@@ -1,6 +1,7 @@
 package com.grabseat.service;
 
 import com.grabseat.dto.*;
+import com.grabseat.exception.ConflictException;
 import com.grabseat.exception.ResourceNotFoundException;
 import com.grabseat.model.*;
 import com.grabseat.repository.*;
@@ -194,6 +195,26 @@ public class AdminService {
         event.update(req.name().trim(), req.description(), req.type(), venue, performer,
             req.startTime(), req.endTime(), req.basePrice(), screen);
         return eventService.getEventDetails(event.getId());
+    }
+
+    /**
+     * Drops an event and its seats. Refused while any seat is reserved or
+     * booked: those rows are referenced by a booking a customer has paid for,
+     * so cancelling the show is a business decision, not a cleanup. The CDC
+     * delete event removes the Elasticsearch document.
+     */
+    @Transactional
+    public void deleteEvent(Long id) {
+        Event event = events.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
+        List<Ticket> seats = tickets.findByEventId(id);
+        long taken = seats.stream().filter(t -> t.getStatus() != TicketStatus.AVAILABLE).count();
+        if (taken > 0) {
+            throw new ConflictException("Cannot delete event " + id + ": " + taken
+                + " seat(s) are reserved or booked");
+        }
+        tickets.deleteAll(seats);
+        events.delete(event);
     }
 
     @Transactional

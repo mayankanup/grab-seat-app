@@ -121,6 +121,12 @@ button:disabled {
   background: #aaa;
   cursor: default;
 }
+button.danger {
+  background: #b00020;
+}
+button.danger:disabled {
+  background: #aaa;
+}
 .seats {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));

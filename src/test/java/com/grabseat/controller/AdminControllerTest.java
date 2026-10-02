@@ -1,5 +1,6 @@
 package com.grabseat.controller;
 
+import com.grabseat.exception.ConflictException;
 import com.grabseat.security.JwtService;
 import com.grabseat.security.SecurityConfig;
 import com.grabseat.service.AdminService;
@@ -15,7 +16,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -141,5 +146,42 @@ class AdminControllerTest {
     void anonymousCannotListVenues() throws Exception {
         mvc.perform(get("/api/admin/venues"))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void adminCanDeleteEvent() throws Exception {
+        mvc.perform(delete("/api/admin/events/5"))
+            .andExpect(status().isNoContent());
+
+        verify(adminService).deleteEvent(5L);
+    }
+
+    @Test
+    @WithMockUser(username = "7", roles = "USER")
+    void userCannotDeleteEvent() throws Exception {
+        mvc.perform(delete("/api/admin/events/5"))
+            .andExpect(status().isForbidden());
+
+        verify(adminService, never()).deleteEvent(any());
+    }
+
+    @Test
+    void anonymousCannotDeleteEvent() throws Exception {
+        mvc.perform(delete("/api/admin/events/5"))
+            .andExpect(status().isUnauthorized());
+
+        verify(adminService, never()).deleteEvent(any());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void deleteEventReportsConflictWhenSeatsAreTaken() throws Exception {
+        doThrow(new ConflictException("Cannot delete event 5: 2 seat(s) are reserved or booked"))
+            .when(adminService).deleteEvent(5L);
+
+        mvc.perform(delete("/api/admin/events/5"))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error").exists());
     }
 }
